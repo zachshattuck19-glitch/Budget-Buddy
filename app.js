@@ -1,112 +1,71 @@
-// Budget Buddy PWA v0.6 – tab fix, green theme, logo
+// Budget Buddy PWA v1.1 – Envelopes & Rollovers (Sinking Funds), bottom tabs
 const state = {
   incomes: [],
   expenses: [],
   debts: [],
   settings: { wiggle: 5, spend: 5, strat: "Avalanche", paydays: [15,30], alertDays: 7, theme: "system" },
-  history: [] // {month:'YYYY-MM', expenseTotal:number}
+  history: [], // bills totals snapshots
+  envelopes: { // persisted envelope data
+    month: null, // last processed month "YYYY-MM"
+    items: {}    // by category: {alloc: number, rollover: number, sinking: bool, goal: number}
+  }
 };
 
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const currency = v => `$${Number(v||0).toFixed(2)}`;
+const monthKey = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
-// Theme handling
 function applyTheme(theme){
   const root = document.documentElement;
   if(theme === "light"){ root.setAttribute("data-theme","light"); }
   else if(theme === "dark"){ root.setAttribute("data-theme","dark"); }
-  else { root.removeAttribute("data-theme"); } // system
+  else { root.removeAttribute("data-theme"); }
 }
 function save(){ localStorage.setItem("bb_data", JSON.stringify(state)); }
 function load(){
-  try{
-    const raw = localStorage.getItem("bb_data");
-    if(raw){ Object.assign(state, JSON.parse(raw)); }
-  }catch(e){ console.warn(e); }
+  try{ const raw = localStorage.getItem("bb_data"); if(raw){ Object.assign(state, JSON.parse(raw)); } }catch(e){}
   applyTheme(state.settings.theme || "system");
+  if(!state.envelopes) state.envelopes = {month: null, items:{}};
+  ensureEnvelopeMonth();
 }
 
-// Helpers
-function thisMonthKey(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-
-// UI Tables + Editing
-function updateEmptyStates(){
-  $("#incomeEmpty").hidden = state.incomes.length>0;
-  $("#expEmpty").hidden = state.expenses.length>0;
-  $("#debtEmpty").hidden = state.debts.length>0;
+// ---- Envelopes logic ----
+function ensureEnvelopeMonth(){
+  const current = monthKey();
+  if(state.envelopes.month !== current){
+    // If there was a previous month, roll it forward automatically based on expenses
+    if(state.envelopes.month){
+      doRollover(state.envelopes.month);
+    }
+    state.envelopes.month = current;
+    save();
+  }
 }
-function rowHTML(cells){ return `<tr>${cells.join('')}</tr>`; }
-function cell(text){ return `<td>${text}</td>`; }
-function renderTables(){
-  // income
-  const it = $("#incomeTable tbody"); if(it){ it.innerHTML=""; }
-  state.incomes.forEach((i,idx)=>{
-    it.insertAdjacentHTML("beforeend", rowHTML([
-      cell(`<span class="r" data-type="inc" data-i="${idx}" data-f="name">${i.name}</span>`),
-      cell(`<span class="r" data-type="inc" data-i="${idx}" data-f="amount">${currency(i.amount)}</span>`),
-      cell(`<span class="r" data-type="inc" data-i="${idx}" data-f="freq">${i.freq||"Monthly"}</span>`),
-      cell(`<button data-x="inc" data-i="${idx}" type="button">Delete</button>`)
-    ]));
-  });
-
-  // expenses
-  const et = $("#expTable tbody"); if(et){ et.innerHTML=""; }
-  state.expenses.forEach((e,idx)=>{
-    et.insertAdjacentHTML("beforeend", rowHTML([
-      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="name">${e.name}</span>`),
-      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="amount">${currency(e.amount)}</span>`),
-      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="due">${e.due}</span>`),
-      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="cat">${e.cat||"General"}</span>`),
-      cell(`<button data-x="exp" data-i="${idx}" type="button">Delete</button>`)
-    ]));
-  });
-
-  // debts
-  const dt = $("#debtTable tbody"); if(dt){ dt.innerHTML=""; }
-  state.debts.forEach((d,idx)=>{
-    dt.insertAdjacentHTML("beforeend", rowHTML([
-      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="name">${d.name}</span>`),
-      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="balance">${currency(d.balance)}</span>`),
-      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="apr">${Number(d.apr).toFixed(2)}%</span>`),
-      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="min">${currency(d.min)}</span>`),
-      cell(`<button data-x="debt" data-i="${idx}" type="button">Delete</button>`)
-    ]));
-  });
-
-  updateEmptyStates();
-  attachInlineEditors();
+function categories(){
+  // Available categories derived from expense categories + any existing envelope rows
+  const set = new Set(Object.keys(state.envelopes.items));
+  state.expenses.forEach(e=> set.add(e.cat||"General"));
+  return Array.from(set).sort();
+}
+function spentThisMonthByCategory(cat){
+  // Since expenses are recurring monthly, treat their sum as monthly spent for that category
+  return state.expenses.filter(e=> (e.cat||"General")===cat).reduce((s,e)=>s+Number(e.amount||0),0);
+}
+function doRollover(prevMonth){
+  // For each category: new rollover = old rollover + allocation - spent(prevMonth)
+  for(const cat of Object.keys(state.envelopes.items)){
+    const it = state.envelopes.items[cat];
+    const spent = spentThisMonthByCategory(cat); // approximation without transactions
+    it.rollover = (Number(it.rollover)||0) + (Number(it.alloc)||0) - spent;
+    // For sinking funds with goal, cap positive rollover at goal
+    if(it.sinking && it.goal>0){
+      it.rollover = Math.min(it.rollover, it.goal);
+    }
+  }
 }
 
-// Inline editor
-function attachInlineEditors(){
-  $$(".r").forEach(el=>{
-    el.addEventListener("click", ()=>{
-      const type=el.dataset.type, idx=parseInt(el.dataset.i,10), field=el.dataset.f;
-      const raw = getRawValue(type, idx, field);
-      const input = document.createElement("input");
-      input.value = raw;
-      input.style.width = "100%";
-      input.addEventListener("blur", ()=>{ commitEdit(type, idx, field, input.value); });
-      input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") input.blur(); });
-      el.replaceWith(input);
-      input.focus();
-    });
-  });
-}
-function getRawValue(type, idx, field){
-  const obj = type==="inc" ? state.incomes[idx] : type==="exp" ? state.expenses[idx] : state.debts[idx];
-  return String(obj[field] ?? "");
-}
-function commitEdit(type, idx, field, val){
-  const obj = type==="inc" ? state.incomes[idx] : type==="exp" ? state.expenses[idx] : state.debts[idx];
-  if(field==="amount"||field==="balance"||field==="min"||field==="apr"){ obj[field]=parseFloat(val)||0; }
-  else if(field==="due"){ obj[field]=parseInt(val,10)||1; }
-  else { obj[field]=val.trim(); }
-  save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab();
-}
-
-// Totals & summary
+// ---- Rendering: Dashboard ----
 function totals(){
   const inc = state.incomes.reduce((s,i)=>s+Number(i.amount||0),0);
   const exp = state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
@@ -116,8 +75,6 @@ function totals(){
   const leftover = inc - (exp + mins + wig + spend);
   return {inc, exp, mins, wig, spend, leftover};
 }
-
-// Debt payoff ETA (simplified)
 function estimateDebtMonths(){
   const t = totals();
   let months=0;
@@ -126,17 +83,19 @@ function estimateDebtMonths(){
     let pool = state.debts.reduce((s,d)=>s+Number(d.min||0),0) + Math.max(0, t.leftover);
     for(const d of debts){
       if(d.bal<=0) continue;
-      const pay = Math.min(pool, d.bal + d.bal*d.apr + d.min); // crude
+      const pay = Math.min(pool, d.bal*(1+d.apr) + d.min);
       d.bal = Math.max(0, d.bal*(1+d.apr) - pay);
       pool -= pay;
     }
     months++;
-    if(pool<=0 && debts.every(d=>d.bal>1 && d.apr===0)) break;
   }
   return months>=600? Infinity : months;
 }
-
-// Dashboard
+function computeAvgBills(n){
+  if(!state.history.length) return state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const lastN = state.history.slice(-n);
+  return (lastN.reduce((s,h)=>s + Number(h.expenseTotal||0), 0) / lastN.length) || 0;
+}
 function renderDashboard(){
   const t = totals();
   $("#dashInc").textContent = currency(t.inc);
@@ -144,70 +103,53 @@ function renderDashboard(){
   $("#dashMin").textContent = currency(t.mins);
   $("#dashSW").textContent = currency(t.spend + t.wig);
   $("#dashLeft").textContent = currency(t.leftover);
-
   const savingsRate = t.inc>0 ? Math.max(0, (t.leftover)/t.inc)*100 : 0;
   $("#gSavings").style.width = Math.min(100, Math.max(0,savingsRate)).toFixed(1) + "%";
   $("#gSavingsLabel").textContent = `${savingsRate.toFixed(1)}%`;
-
   const months = estimateDebtMonths();
-  let label = "—";
-  let pct = 0;
-  if(months===Infinity){ label = "Not enough to reduce principal"; pct = 0; }
-  else { label = `${months} mo (~${(months/12).toFixed(1)} yrs)`; pct = Math.min(100, 100*(1/Math.max(1, months))); }
-  $("#gDebt").style.width = pct + "%";
-  $("#gDebtLabel").textContent = label;
-
-  // Bills account recommendation
+  $("#gDebt").style.width = months===Infinity? "0%" : Math.min(100, 100*(1/Math.max(1, months))) + "%";
+  $("#gDebtLabel").textContent = months===Infinity? "—" : `${months} mo (~${(months/12).toFixed(1)} yrs)`;
   const avg = computeAvgBills(3);
   $("#avgBills").textContent = currency(avg);
-  const suggested = Math.round(avg/100)*100;
-  $("#suggestDeposit").textContent = currency(suggested);
+  $("#suggestDeposit").textContent = currency(Math.round(avg/100)*100);
   const last = state.history[state.history.length-1];
   $("#snapshotInfo").textContent = last ? `Last snapshot: ${last.month} = ${currency(last.expenseTotal)}` : "No snapshots yet.";
 }
-function computeAvgBills(n){
-  if(!state.history.length) return state.expenses.reduce((s,e)=>s+Number(e.amount||0),0); // fallback: current month sum
-  const lastN = state.history.slice(-n);
-  const avg = lastN.reduce((s,h)=>s + Number(h.expenseTotal||0), 0) / lastN.length;
-  return avg || 0;
+
+// ---- Rendering: Envelopes ----
+function renderEnvelopes(){
+  ensureEnvelopeMonth();
+  const tbody = $("#envTable tbody"); tbody.innerHTML="";
+  const cats = categories();
+  if(cats.length===0){
+    const tr = document.createElement("tr"); tr.innerHTML = `<td colspan="7" class="muted">No categories yet. Add one or create expenses to seed categories.</td>`; tbody.appendChild(tr);
+  }
+  for(const cat of cats){
+    const it = state.envelopes.items[cat] || (state.envelopes.items[cat]={alloc:0, rollover:0, sinking:false, goal:0});
+    const spent = spentThisMonthByCategory(cat);
+    const prog = it.sinking && it.goal>0 ? Math.min(100, Math.max(0,(it.rollover/it.goal)*100)).toFixed(0) : null;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${cat}</td>
+      <td><input type="number" step="0.01" min="0" value="${it.alloc}" data-cat="${cat}" data-f="alloc"></td>
+      <td>${currency(spent)}</td>
+      <td>${currency(it.rollover)}</td>
+      <td><input type="checkbox" ${it.sinking?'checked':''} data-cat="${cat}" data-f="sinking"></td>
+      <td><input type="number" step="0.01" min="0" value="${it.goal||0}" ${it.sinking?'':'disabled'} data-cat="${cat}" data-f="goal"></td>
+      <td>${prog!==null? `<small class="muted">${prog}%</small>`:''}</td>
+    `;
+    tbody.appendChild(row);
+  }
+  $("#envInfo").textContent = `Current month: ${state.envelopes.month || monthKey()}`;
+}
+function updateEnvelopeField(cat, field, value){
+  const it = state.envelopes.items[cat] || (state.envelopes.items[cat]={alloc:0, rollover:0, sinking:false, goal:0});
+  if(field==="alloc"||field==="goal"){ it[field]=parseFloat(value)||0; }
+  else if(field==="sinking"){ it[field]=!!value; }
+  save(); renderEnvelopes();
 }
 
-// Data tab renderers
-function renderDataTab(){
-  // Income totals
-  const incTotal = state.incomes.reduce((s,i)=>s+Number(i.amount||0),0);
-  $("#dataIncomeTotals").textContent = `Total monthly income: ${currency(incTotal)}`;
-  const incList = $("#dataIncomeList"); if(incList) incList.innerHTML="";
-  state.incomes.forEach(i=>{
-    const row = document.createElement("div"); row.className="row";
-    row.innerHTML = `<div>${i.name} (${i.freq||"Monthly"})</div><div>${currency(i.amount)}</div>`;
-    incList.appendChild(row);
-  });
-
-  // Expenses by category
-  const byCat = {};
-  state.expenses.forEach(e=>{ const k=e.cat||"General"; byCat[k]=(byCat[k]||0)+Number(e.amount||0); });
-  const expTotal = state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-  $("#dataExpenseTotals").textContent = `Total monthly expenses: ${currency(expTotal)}`;
-  const catList = $("#dataExpenseByCat"); if(catList) catList.innerHTML="";
-  Object.entries(byCat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
-    const row = document.createElement("div"); row.className="row";
-    row.innerHTML = `<div>${k}</div><div>${currency(v)}</div>`;
-    catList.appendChild(row);
-  });
-
-  // Debts list
-  const debtBal = state.debts.reduce((s,d)=>s+Number(d.balance||0),0);
-  $("#dataDebtTotals").textContent = `Total debt balance: ${currency(debtBal)}`;
-  const debtList = $("#dataDebtList"); if(debtList) debtList.innerHTML="";
-  state.debts.forEach(d=>{
-    const row = document.createElement("div"); row.className="row";
-    row.innerHTML = `<div>${d.name} (${Number(d.apr).toFixed(2)}% APR)</div><div>Bal: ${currency(d.balance)} • Min: ${currency(d.min)}</div>`;
-    debtList.appendChild(row);
-  });
-}
-
-// Planner
+// ---- Planner ----
 function getPaydays(month, year){
   const days = (state.settings.paydays||[15,30]).map(x=>parseInt(x,10)).filter(n=>n>=1&&n<=31).sort((a,b)=>a-b);
   const last = new Date(year, month, 0).getDate();
@@ -254,149 +196,201 @@ function planMonth(){
   $("#plannerOut").textContent = lines.join("\n");
 }
 
-// Tabs + persistence (robust with delegation)
-function activateTab(name){
-  $$(".tab").forEach(b=>{
-    const is = b.dataset.tab===name;
-    b.classList.toggle("active", is);
-    b.setAttribute("aria-selected", is ? "true" : "false");
-  });
-  $$(".panel").forEach(p=> p.classList.toggle("active", p.id===name));
-  localStorage.setItem("bb_last_tab", name);
-  if(name==="data") renderDataTab();
-  if(name==="dashboard") renderDashboard();
+// ---- Expenses & Debts tables ----
+function updateEmptyStates(){
+  $("#expEmpty").hidden = state.expenses.length>0;
+  $("#debtEmpty").hidden = state.debts.length>0;
 }
-function initTabs(){
-  const nav = document.querySelector(".tabs");
-  if(nav){
-    nav.addEventListener("click", (e)=>{
-      const btn = e.target.closest(".tab");
-      if(!btn) return;
-      const name = btn.dataset.tab;
-      if(name) activateTab(name);
+function rowHTML(cells){ return `<tr>${cells.join('')}</tr>`; }
+function cell(text){ return `<td>${text}</td>`; }
+function renderExpenseTable(){
+  const et = $("#expTable tbody"); if(!et) return; et.innerHTML="";
+  state.expenses.forEach((e,idx)=>{
+    et.insertAdjacentHTML("beforeend", rowHTML([
+      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="name">${e.name}</span>`),
+      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="amount">${currency(e.amount)}</span>`),
+      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="due">${e.due}</span>`),
+      cell(`<span class="r" data-type="exp" data-i="${idx}" data-f="cat">${e.cat||"General"}</span>`),
+      cell(`<button data-x="exp" data-i="${idx}" type="button">Delete</button>`)
+    ]));
+  });
+  updateEmptyStates();
+  attachInlineEditors();
+}
+function renderDebtTable(){
+  const dt = $("#debtTable tbody"); if(!dt) return; dt.innerHTML="";
+  state.debts.forEach((d,idx)=>{
+    dt.insertAdjacentHTML("beforeend", rowHTML([
+      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="name">${d.name}</span>`),
+      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="balance">${currency(d.balance)}</span>`),
+      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="apr">${Number(d.apr).toFixed(2)}%</span>`),
+      cell(`<span class="r" data-type="debt" data-i="${idx}" data-f="min">${currency(d.min)}</span>`),
+      cell(`<button data-x="debt" data-i="${idx}" type="button">Delete</button>`)
+    ]));
+  });
+  attachInlineEditors();
+}
+function attachInlineEditors(){
+  $$(".r").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const type=el.dataset.type, idx=parseInt(el.dataset.i,10), field=el.dataset.f;
+      const obj = type==="exp" ? state.expenses[idx] : state.debts[idx];
+      const input = document.createElement("input");
+      input.value = String(obj[field] ?? "");
+      input.style.width = "100%";
+      input.addEventListener("blur", ()=>{
+        if(field==="amount"||field==="balance"||field==="min"||field==="apr"){ obj[field]=parseFloat(input.value)||0; }
+        else if(field==="due"){ obj[field]=parseInt(input.value,10)||1; }
+        else { obj[field]=input.value.trim(); }
+        save(); renderExpenseTable(); renderDebtTable(); renderEnvelopes(); renderDashboard(); planMonth();
+      });
+      input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") input.blur(); });
+      el.replaceWith(input); input.focus();
     });
-  }
-  const saved = localStorage.getItem("bb_last_tab");
-  activateTab(saved && $("#"+saved) ? saved : "dashboard");
+  });
 }
 
-// Events
-function setupEvents(){
-  // Add forms
-  $("#incomeForm")?.addEventListener("submit", (e)=>{
-    e.preventDefault();
-    state.incomes.push({ name: $("#incName").value.trim()||"Income", amount: parseFloat($("#incAmount").value||0), freq: $("#incFreq").value });
-    save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab(); e.target.reset();
+// ---- Navigation ----
+function showPanel(id){
+  $$(".panel").forEach(p=> p.classList.toggle("active", p.id===id));
+  $$(".t").forEach(b=> b.classList.toggle("active", b.dataset.tab===id));
+  localStorage.setItem("bb_tab", id);
+  if(id==="dashboard") renderDashboard();
+  if(id==="budget") renderEnvelopes();
+}
+function initNav(){
+  document.querySelector(".tabbar").addEventListener("click",(e)=>{
+    const b=e.target.closest(".t"); if(!b) return; showPanel(b.dataset.tab);
   });
+  const restored = localStorage.getItem("bb_tab") || "dashboard";
+  showPanel(restored);
+}
+
+// ---- Events ----
+function setupEvents(){
+  // Add expenses
   $("#expForm")?.addEventListener("submit", (e)=>{
     e.preventDefault();
     state.expenses.push({ name: $("#expName").value.trim()||"Expense", amount: parseFloat($("#expAmount").value||0), due: parseInt($("#expDue").value||1,10), cat: $("#expCat").value });
-    save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab(); e.target.reset();
+    save(); renderExpenseTable(); renderEnvelopes(); renderDashboard(); planMonth(); e.target.reset();
   });
+  // Add debts
   $("#debtForm")?.addEventListener("submit", (e)=>{
     e.preventDefault();
     state.debts.push({ name: $("#debtName").value.trim()||"Debt", balance: parseFloat($("#debtBal").value||0), apr: parseFloat($("#debtApr").value||0), min: parseFloat($("#debtMin").value||0) });
-    save(); renderTables(); recalcSummary(); renderDashboard(); renderDataTab(); e.target.reset();
+    save(); renderDebtTable(); renderDashboard(); e.target.reset();
   });
 
-  // Delete
-  document.body.addEventListener("click", (e)=>{
-    const btn = e.target.closest("button");
-    if(!btn || !btn.dataset.x) return;
-    const idx = parseInt(btn.dataset.i,10);
-    if(btn.dataset.x==="inc") state.incomes.splice(idx,1);
+  // Delete handlers
+  document.body.addEventListener("click",(e)=>{
+    const btn=e.target.closest("button"); if(!btn||!btn.dataset.x) return;
+    const idx=parseInt(btn.dataset.i,10);
     if(btn.dataset.x==="exp") state.expenses.splice(idx,1);
     if(btn.dataset.x==="debt") state.debts.splice(idx,1);
-    save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab();
+    save(); renderExpenseTable(); renderDebtTable(); renderEnvelopes(); renderDashboard(); planMonth();
   });
 
-  // Settings segmented controls
+  // Envelopes table edits
+  document.body.addEventListener("input", (e)=>{
+    const inp = e.target;
+    if(!inp.dataset || !inp.dataset.cat) return;
+    const cat = inp.dataset.cat, f = inp.dataset.f;
+    let val = inp.type==="checkbox" ? inp.checked : inp.value;
+    updateEnvelopeField(cat, f, val);
+  });
+  document.body.addEventListener("change", (e)=>{
+    const inp = e.target;
+    if(!inp.dataset || !inp.dataset.cat) return;
+    const cat = inp.dataset.cat, f = inp.dataset.f;
+    if(f==="sinking"){
+      // enable/disable goal field
+      const row = inp.closest("tr");
+      const goal = row.querySelector('input[data-f="goal"]');
+      goal.disabled = !inp.checked;
+    }
+  });
+
+  // Envelopes buttons
+  $("#addEnv")?.addEventListener("click", ()=>{
+    const name = prompt("New category name? (e.g., Car Maintenance)");
+    if(!name) return;
+    if(!state.envelopes.items[name]) state.envelopes.items[name] = {alloc:0, rollover:0, sinking:false, goal:0};
+    save(); renderEnvelopes();
+  });
+
+  $("#closeMonth")?.addEventListener("click", ()=>{
+    ensureEnvelopeMonth();
+    const prev = state.envelopes.month;
+    doRollover(prev);
+    // advance month to next
+    const d = new Date(prev + "-01T00:00:00");
+    d.setMonth(d.getMonth()+1);
+    state.envelopes.month = monthKey(d);
+    save(); renderEnvelopes(); alert("Month closed. Rollovers applied.");
+  });
+
+  // Settings
   $$(".segmented .seg").forEach(seg=>{
     seg.addEventListener("click", ()=>{
-      const group = seg.dataset.seg;
-      const val = seg.dataset.val;
+      const group = seg.dataset.seg; const val = seg.dataset.val;
       $$(`.segmented .seg[data-seg="${group}"]`).forEach(s=> s.classList.toggle("active", s===seg));
       if(group==="strat"){ state.settings.strat = val; }
       if(group==="theme"){ state.settings.theme = val; applyTheme(val); }
       save(); renderDashboard();
     });
   });
-
-  // Range labels
-  const wig = $("#wigglePct"), sp = $("#spendPct");
-  const setLabels = ()=>{ $("#wiggleVal").textContent = `${Number(wig.value).toFixed(1)}%`; $("#spendVal").textContent = `${Number(sp.value).toFixed(1)}%`; };
-  [wig, sp].forEach(el=> el?.addEventListener("input", setLabels));
-  setLabels();
-
-  // Save settings
+  const wig=$("#wigglePct"), sp=$("#spendPct");
+  const setLabels=()=>{ $("#wiggleVal").textContent=`${Number(wig.value).toFixed(1)}%`; $("#spendVal").textContent=`${Number(sp.value).toFixed(1)}%`; };
+  [wig,sp].forEach(el=> el?.addEventListener("input", setLabels)); setLabels();
   $("#saveSettings")?.addEventListener("click", ()=>{
-    state.settings.wiggle = parseFloat($("#wigglePct").value||0);
-    state.settings.spend = parseFloat($("#spendPct").value||0);
-    state.settings.paydays = ($("#paydays").value||"15,30").split(",").map(s=>parseInt(s.trim(),10)).filter(Boolean);
-    state.settings.alertDays = parseInt($("#alerts").value||7,10);
-    save(); recalcSummary(); planMonth(); renderDashboard(); alert("Settings saved.");
+    state.settings.wiggle=parseFloat(wig.value||0);
+    state.settings.spend=parseFloat(sp.value||0);
+    state.settings.paydays=($("#paydays").value||"15,30").split(",").map(s=>parseInt(s.trim(),10)).filter(Boolean);
+    state.settings.alertDays=parseInt($("#alerts").value||7,10);
+    save(); renderDashboard(); planMonth(); alert("Settings saved.");
   });
 
-  // Data tab backup/restore/reset
+  // Backup/restore/reset
   $("#backupBtn")?.addEventListener("click", ()=>{
     const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "budget_buddy_backup.json"; a.click();
-    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    const url = URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download="budget_buddy_backup.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   $("#restoreBtn")?.addEventListener("click", async ()=>{
-    const file = $("#restoreFile").files[0]; if(!file){ alert("Choose a backup file first."); return; }
-    try{
-      const data = JSON.parse(await file.text());
-      state.incomes = data.incomes||[]; state.expenses = data.expenses||[]; state.debts = data.debts||[];
-      state.settings = Object.assign(state.settings, data.settings||{});
-      state.history = data.history||[];
-      applyTheme(state.settings.theme||"system");
-      save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab();
-      alert("Restore complete.");
+    const file=$("#restoreFile").files[0]; if(!file){ alert("Choose a backup file first."); return; }
+    try{ const data = JSON.parse(await file.text());
+      state.incomes=data.incomes||[]; state.expenses=data.expenses||[]; state.debts=data.debts||[];
+      state.settings=Object.assign(state.settings, data.settings||{}); state.history=data.history||[];
+      state.envelopes=data.envelopes||state.envelopes;
+      applyTheme(state.settings.theme||"system"); save();
+      renderExpenseTable(); renderDebtTable(); renderEnvelopes(); renderDashboard(); planMonth(); alert("Restore complete.");
     }catch(e){ alert("Invalid file."); }
   });
   $("#resetBtn")?.addEventListener("click", ()=>{
     if(confirm("Reset ALL data? This cannot be undone.")){
-      state.incomes=[]; state.expenses=[]; state.debts=[];
+      state.incomes=[]; state.expenses=[]; state.debts=[]; state.history=[];
       state.settings={ wiggle:5, spend:5, strat:"Avalanche", paydays:[15,30], alertDays:7, theme:"system" };
-      state.history=[];
-      applyTheme(state.settings.theme); save(); renderTables(); recalcSummary(); planMonth(); renderDashboard(); renderDataTab();
+      state.envelopes={month:null, items:{}};
+      applyTheme(state.settings.theme); save();
+      renderExpenseTable(); renderDebtTable(); renderEnvelopes(); renderDashboard(); planMonth();
     }
   });
 
-  // Dashboard snapshot
+  // Snapshot
   $("#snapshotNow")?.addEventListener("click", ()=>{
-    const key = thisMonthKey();
+    const d=new Date(); const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     const expenseTotal = state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
     state.history = state.history.filter(h=>h.month!==key);
-    state.history.push({month:key, expenseTotal});
-    state.history.sort((a,b)=> a.month.localeCompare(b.month));
-    save(); renderDashboard();
-    alert(`Recorded ${key} bills total: ${currency(expenseTotal)}`);
-  });
-
-  // Planner
-  $("#planBtn")?.addEventListener("click", ()=> planMonth() );
-
-  // Install prompt (non-iOS)
-  let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; $("#installBtn").hidden=false; });
-  $("#installBtn")?.addEventListener("click", async ()=>{
-    if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; $("#installBtn").hidden=true;
+    state.history.push({month:key, expenseTotal}); state.history.sort((a,b)=> a.month.localeCompare(b.month));
+    save(); renderDashboard(); alert(`Recorded ${key} bills total: ${currency(expenseTotal)}`);
   });
 }
 
-// SW
+// Service worker
 if('serviceWorker' in navigator){ window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js")); }
 
-// Init
 load();
 document.addEventListener("DOMContentLoaded", ()=>{
-  renderTables(); // tables safe even if not visible yet
-  // ensure something renders before tabs init
-  renderDashboard(); renderDataTab();
-  initTabs(); setupEvents();
-  // Recalc after everything is wired
-  try{ recalcSummary(); planMonth(); }catch(e){ console.warn(e); }
+  renderExpenseTable(); renderDebtTable(); renderEnvelopes(); renderDashboard(); planMonth();
+  initNav(); setupEvents();
 });
