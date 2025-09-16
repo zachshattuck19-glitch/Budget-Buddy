@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0b5ed7"/>
+  <title>Budget Buddy (PWA)</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>Budget Buddy</h1>
+  <button id="installBtn" hidden>Install</button>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="income">Income</button>
+  <button class="tab" data-tab="expenses">Expenses</button>
+  <button class="tab" data-tab="debts">Debts</button>
+  <button class="tab" data-tab="settings">Settings</button>
+  <button class="tab" data-tab="planner">Paycheck Planner</button>
+  <button class="tab" data-tab="summary">Summary</button>
+</nav>
+
+<main>
+  <section id="income" class="panel active">
+    <h2>Income</h2>
+    <form id="incomeForm" class="inline-form">
+      <input id="incName" placeholder="Name" required>
+      <input id="incAmount" placeholder="Amount (monthly)" type="number" min="0" step="0.01" required>
+      <select id="incFreq">
+        <option>Monthly</option>
+        <option>Biweekly</option>
+        <option>Weekly</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+    <table id="incomeTable">
+      <thead><tr><th>Name</th><th>Amount</th><th>Frequency</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="expenses" class="panel">
+    <h2>Expenses</h2>
+    <form id="expForm" class="inline-form">
+      <input id="expName" placeholder="Name" required>
+      <input id="expAmount" placeholder="Amount (monthly)" type="number" step="0.01" min="0" required>
+      <input id="expDue" placeholder="Due day (1-31)" type="number" min="1" max="31" value="1" required>
+      <select id="expCat">
+        <option>Housing</option><option>Utilities</option><option>Food</option><option>Transport</option>
+        <option>Debt</option><option>Subscriptions</option><option>General</option><option>Medical</option>
+        <option>Savings</option><option>Pets</option><option>Fun</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+    <table id="expTable">
+      <thead><tr><th>Name</th><th>Amount</th><th>Due</th><th>Category</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="debts" class="panel">
+    <h2>Debts</h2>
+    <form id="debtForm" class="inline-form">
+      <input id="debtName" placeholder="Name" required>
+      <input id="debtBal" placeholder="Balance" type="number" step="0.01" min="0" required>
+      <input id="debtApr" placeholder="APR %" type="number" step="0.01" min="0" required>
+      <input id="debtMin" placeholder="Min Payment" type="number" step="0.01" min="0" required>
+      <button type="submit">Add</button>
+    </form>
+    <table id="debtTable">
+      <thead><tr><th>Name</th><th>Balance</th><th>APR %</th><th>Min</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="settings" class="panel">
+    <h2>Settings</h2>
+    <div class="grid">
+      <label>Wiggle Room %<input id="wigglePct" type="number" step="0.1" min="0" value="5"></label>
+      <label>Spending %<input id="spendPct" type="number" step="0.1" min="0" value="5"></label>
+      <label>Debt Strategy
+        <select id="strategy"><option>Avalanche</option><option>Snowball</option></select>
+      </label>
+      <label>Paydays (comma-separated days)<input id="paydays" value="15,30"></label>
+      <label>Due Alerts (days ahead)<input id="alerts" type="number" min="0" value="7"></label>
+    </div>
+    <div class="buttons">
+      <button id="saveSettings">Save Settings</button>
+      <button id="exportJSON">Export Data (JSON)</button>
+      <input id="importFile" type="file" accept="application/json,text/csv">
+      <button id="importJSON">Import</button>
+      <a id="downloadCSV" href="#" download="budget_export.csv" class="button">Export CSV (All)</a>
+    </div>
+  </section>
+
+  <section id="planner" class="panel">
+    <h2>Paycheck Planner</h2>
+    <div class="inline-form">
+      <label>Month <input id="planMonth" type="number" min="1" max="12"></label>
+      <label>Year <input id="planYear" type="number" min="2000" max="2100"></label>
+      <button id="planBtn">Plan</button>
+    </div>
+    <pre id="plannerOut" class="box"></pre>
+  </section>
+
+  <section id="summary" class="panel">
+    <h2>Summary</h2>
+    <button id="recalc">Recalculate</button>
+    <pre id="summaryOut" class="box"></pre>
+    <div id="alertsList" class="box"></div>
+  </section>
+</main>
+
+<footer>
+  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.1</small>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

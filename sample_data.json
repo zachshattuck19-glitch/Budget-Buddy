@@ -1,0 +1,53 @@
+{
+  "incomes": [
+    {
+      "name": "Paycheck (Net)",
+      "amount": 3971,
+      "freq": "Monthly"
+    }
+  ],
+  "expenses": [
+    {
+      "name": "Rent",
+      "amount": 1600,
+      "due": 1,
+      "cat": "Housing"
+    },
+    {
+      "name": "Electric",
+      "amount": 130,
+      "due": 15,
+      "cat": "Utilities"
+    },
+    {
+      "name": "Phone",
+      "amount": 270,
+      "due": 10,
+      "cat": "Utilities"
+    }
+  ],
+  "debts": [
+    {
+      "name": "Apple Card",
+      "balance": 4161,
+      "apr": 26.24,
+      "min": 260
+    },
+    {
+      "name": "Amazon Prime Card",
+      "balance": 2858,
+      "apr": 28,
+      "min": 71
+    }
+  ],
+  "settings": {
+    "wiggle": 5,
+    "spend": 5,
+    "strat": "Avalanche",
+    "paydays": [
+      15,
+      30
+    ],
+    "alertDays": 7
+  }
+}
