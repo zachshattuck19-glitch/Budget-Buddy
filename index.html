@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <meta name="theme-color" content="#0e8f54"/>
-  <title>Budget Buddy (PWA v0.5.1)</title>
+  <meta name="theme-color" content="#13795b"/>
+  <title>Budget Buddy (PWA v0.6)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,28 +14,23 @@
 <body>
 <header>
   <div class="brand">
-    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-      <defs>
-        <linearGradient id="g$" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="#17b26a"/><stop offset="100%" stop-color="#0e8f54"/>
-        </linearGradient>
-      </defs>
-      <rect x="1.5" y="1.5" width="21" height="21" rx="5" fill="url(#g$)" stroke="rgba(0,0,0,.08)"/>
-      <text x="12" y="15" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="700" font-size="11" fill="#fff">$</text>
+    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true" class="logo">
+      <circle cx="12" cy="12" r="11" fill="currentColor" opacity=".15"/>
+      <path d="M12 4c-2.2 0-4 .9-4 2 0 1.2 1.5 1.8 3.3 2.1l2.1.4c2.5.5 4.6 1.3 4.6 3.7 0 2.2-2 3.7-4.8 4v1.8h-2v-1.8c-2.3-.2-4.2-1.2-5-2.5l1.7-1c.7 1 2.1 1.7 3.3 1.9l2.2.3c1.9-.2 3.1-1 3.1-1.9 0-.8-.8-1.2-2.8-1.6l-2.4-.5C8.2 10.5 6 9.7 6 7.9 6 5.6 8.6 4.3 11 4.1V2.5h2V4c.2 0 .7 0 1 0z" fill="currentColor"/>
     </svg>
     <h1>Budget Buddy</h1>
   </div>
-  <button id="installBtn" hidden>Install</button>
+  <button id="installBtn" type="button" hidden>Install</button>
 </header>
 
 <nav class="tabs" aria-label="Primary">
-  <button class="tab active" data-tab="dashboard">🏠 Dashboard</button>
-  <button class="tab" data-tab="income">💵 Income</button>
-  <button class="tab" data-tab="expenses">🧾 Expenses</button>
-  <button class="tab" data-tab="debts">💳 Debts</button>
-  <button class="tab" data-tab="planner">💸 Planner</button>
-  <button class="tab" data-tab="data">📚 Data</button>
-  <button class="tab" data-tab="settings">⚙️ Settings</button>
+  <button class="tab active" type="button" data-tab="dashboard">🏠 Dashboard</button>
+  <button class="tab" type="button" data-tab="income">💵 Income</button>
+  <button class="tab" type="button" data-tab="expenses">🧾 Expenses</button>
+  <button class="tab" type="button" data-tab="debts">💳 Debts</button>
+  <button class="tab" type="button" data-tab="planner">💸 Planner</button>
+  <button class="tab" type="button" data-tab="data">📚 Data</button>
+  <button class="tab" type="button" data-tab="settings">⚙️ Settings</button>
 </nav>
 
 <main>
@@ -66,11 +61,11 @@
       </div>
       <div class="card">
         <h3>Bills Account Recommendation</h3>
-        <p class="hint">We average your monthly bills and round to the nearest $100 so your bills account always has enough.</p>
-        <div class="rowline"><span>Avg. Monthly Bills (last 3 snapshots)</span><strong id="avgBills">$0.00</strong></div>
+        <p class="hint">Average last 3 monthly bills, rounded to the nearest $100 for auto-deposit.</p>
+        <div class="rowline"><span>Avg. Monthly Bills (last 3)</span><strong id="avgBills">$0.00</strong></div>
         <div class="rowline"><span>Suggested Deposit</span><strong id="suggestDeposit">$0.00</strong></div>
         <div class="buttons">
-          <button id="snapshotNow">Record This Month</button>
+          <button id="snapshotNow" type="button">Record This Month</button>
           <small class="muted" id="snapshotInfo"></small>
         </div>
       </div>
@@ -80,10 +75,12 @@
   <section id="income" class="panel">
     <h2>Income</h2>
     <p class="hint">Add your monthly take-home pay (net). If paid multiple times per month, add each as a separate line.</p>
-    <form id="incomeForm" class="inline-form">
+    <form id="incomeForm" class="inline-form" aria-label="Add income">
       <input id="incName" placeholder="Name (e.g., Paycheck)" required>
       <input id="incAmount" placeholder="Amount (monthly)" inputmode="decimal" type="number" min="0" step="0.01" required>
-      <select id="incFreq"><option>Monthly</option><option>Biweekly</option><option>Weekly</option></select>
+      <select id="incFreq" aria-label="Frequency">
+        <option>Monthly</option><option>Biweekly</option><option>Weekly</option>
+      </select>
       <button type="submit" class="primary">Add</button>
     </form>
     <div class="empty" id="incomeEmpty" hidden>No incomes yet. Add your first paycheck above.</div>
@@ -143,7 +140,7 @@
     <div class="inline-form wide">
       <label>Month <input id="planMonth" type="number" min="1" max="12"></label>
       <label>Year <input id="planYear" type="number" min="2000" max="2100"></label>
-      <button id="planBtn" class="primary">Plan</button>
+      <button id="planBtn" type="button" class="primary">Plan</button>
     </div>
     <pre id="plannerOut" class="box"></pre>
   </section>
@@ -169,10 +166,10 @@
       </div>
     </div>
     <div class="buttons">
-      <button id="backupBtn">Backup (Download)</button>
+      <button id="backupBtn" type="button">Backup (Download)</button>
       <input id="restoreFile" type="file" accept="application/json">
-      <button id="restoreBtn">Restore</button>
-      <button id="resetBtn" class="danger">Reset All Data</button>
+      <button id="restoreBtn" type="button">Restore</button>
+      <button id="resetBtn" type="button" class="danger">Reset All Data</button>
     </div>
   </section>
 
@@ -194,8 +191,8 @@
     <div class="settings-group">
       <h3>Debt Strategy</h3>
       <div class="segmented" role="radiogroup" aria-label="Debt Strategy">
-        <button data-seg="strat" data-val="Avalanche" class="seg active">Avalanche</button>
-        <button data-seg="strat" data-val="Snowball" class="seg">Snowball</button>
+        <button data-seg="strat" data-val="Avalanche" type="button" class="seg active">Avalanche</button>
+        <button data-seg="strat" data-val="Snowball" type="button" class="seg">Snowball</button>
       </div>
       <small class="hint">Avalanche: highest APR first • Snowball: smallest balance first</small>
     </div>
@@ -211,20 +208,20 @@
     <div class="settings-group">
       <h3>Appearance</h3>
       <div class="segmented" role="radiogroup" aria-label="Theme">
-        <button data-seg="theme" data-val="system" class="seg active">System</button>
-        <button data-seg="theme" data-val="light" class="seg">Light</button>
-        <button data-seg="theme" data-val="dark" class="seg">Dark</button>
+        <button data-seg="theme" data-val="system" type="button" class="seg active">System</button>
+        <button data-seg="theme" data-val="light" type="button" class="seg">Light</button>
+        <button data-seg="theme" data-val="dark" type="button" class="seg">Dark</button>
       </div>
     </div>
 
     <div class="buttons">
-      <button id="saveSettings" class="primary">Save Settings</button>
+      <button id="saveSettings" type="button" class="primary">Save Settings</button>
     </div>
   </section>
 </main>
 
 <footer>
-  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.5.1</small>
+  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.6</small>
 </footer>
 
 <script src="app.js"></script>
