@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0b5ed7"/>
-  <title>Budget Buddy (PWA v0.2)</title>
+  <title>Budget Buddy (PWA v0.3)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -93,7 +93,7 @@
 
   <section id="settings" class="panel" role="region">
     <h2>Settings</h2>
-    <p class="hint">Set wiggle room, spending money, debt strategy, paydays, and due alerts.</p>
+    <p class="hint">Set wiggle room, spending money, debt strategy, paydays, due alerts, and theme.</p>
     <div class="grid">
       <label>Wiggle Room %<input id="wigglePct" type="number" step="0.1" min="0" value="5"></label>
       <label>Spending %<input id="spendPct" type="number" step="0.1" min="0" value="5"></label>
@@ -102,6 +102,13 @@
       </label>
       <label>Paydays (comma-separated days)<input id="paydays" value="15,30"></label>
       <label>Due Alerts (days ahead)<input id="alerts" type="number" min="0" value="7"></label>
+      <label>Theme
+        <select id="theme">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
     </div>
     <div class="buttons">
       <button id="saveSettings" class="primary">Save Settings</button>
@@ -133,7 +140,7 @@
 </main>
 
 <footer>
-  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.2</small>
+  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.3</small>
 </footer>
 
 <script src="app.js"></script>

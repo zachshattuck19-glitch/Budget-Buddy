@@ -1,21 +1,29 @@
-// Budget Buddy PWA v0.2 – improved mobile UI, empty states, saved tab
+// Budget Buddy PWA v0.3 – dark mode + responsive form fixes + polish
 const state = {
   incomes: [],
   expenses: [],
   debts: [],
-  settings: { wiggle: 5, spend: 5, strat: "Avalanche", paydays: [15,30], alertDays: 7 }
+  settings: { wiggle: 5, spend: 5, strat: "Avalanche", paydays: [15,30], alertDays: 7, theme: "system" }
 };
 
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const currency = v => `$${Number(v||0).toFixed(2)}`;
 
+// Theme handling
+function applyTheme(theme){
+  const root = document.documentElement;
+  if(theme === "light"){ root.setAttribute("data-theme","light"); }
+  else if(theme === "dark"){ root.setAttribute("data-theme","dark"); }
+  else { root.removeAttribute("data-theme"); } // system
+}
 function save(){ localStorage.setItem("bb_data", JSON.stringify(state)); }
 function load(){
   try{
     const raw = localStorage.getItem("bb_data");
     if(raw){ Object.assign(state, JSON.parse(raw)); }
   }catch(e){ console.warn(e); }
+  applyTheme(state.settings.theme || "system");
 }
 
 function updateEmptyStates(){
@@ -223,6 +231,8 @@ function setupEvents(){
     state.settings.strat = $("#strategy").value;
     state.settings.paydays = ($("#paydays").value||"15,30").split(",").map(s=>parseInt(s.trim(),10)).filter(Boolean);
     state.settings.alertDays = parseInt($("#alerts").value||7,10);
+    state.settings.theme = ($("#theme").value||"system");
+    applyTheme(state.settings.theme);
     save(); recalcSummary(); planMonth();
     alert("Settings saved.");
   });
@@ -249,6 +259,7 @@ function setupEvents(){
       state.expenses = data.expenses||[];
       state.debts = data.debts||[];
       state.settings = Object.assign(state.settings, data.settings||{});
+      applyTheme(state.settings.theme||"system");
       save(); renderTables(); recalcSummary(); planMonth();
       alert("Imported.");
     }catch(e){ alert("Invalid JSON."); }
@@ -286,7 +297,7 @@ function setupEvents(){
 
 // SW
 if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js'));
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
 }
 
 // Init
