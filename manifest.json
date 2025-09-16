@@ -3,8 +3,8 @@
   "short_name": "BudgetBuddy",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#13795b",
+  "background_color": "#1B4332",
+  "theme_color": "#1B4332",
   "icons": [
     {
       "src": "icons/icon-192.png",
