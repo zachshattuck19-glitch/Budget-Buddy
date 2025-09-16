@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0b5ed7"/>
-  <title>Budget Buddy (PWA v0.4)</title>
+  <title>Budget Buddy (PWA v0.5)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,17 +18,55 @@
 </header>
 
 <nav class="tabs" aria-label="Primary">
-  <button class="tab active" data-tab="income" aria-controls="income" aria-selected="true">💵 Income</button>
-  <button class="tab" data-tab="expenses" aria-controls="expenses" aria-selected="false">🧾 Expenses</button>
-  <button class="tab" data-tab="debts" aria-controls="debts" aria-selected="false">💳 Debts</button>
-  <button class="tab" data-tab="planner" aria-controls="planner" aria-selected="false">💸 Planner</button>
-  <button class="tab" data-tab="summary" aria-controls="summary" aria-selected="false">📊 Summary</button>
-  <button class="tab" data-tab="data" aria-controls="data" aria-selected="false">📚 Data</button>
-  <button class="tab" data-tab="settings" aria-controls="settings" aria-selected="false">⚙️ Settings</button>
+  <button class="tab active" data-tab="dashboard">🏠 Dashboard</button>
+  <button class="tab" data-tab="income">💵 Income</button>
+  <button class="tab" data-tab="expenses">🧾 Expenses</button>
+  <button class="tab" data-tab="debts">💳 Debts</button>
+  <button class="tab" data-tab="planner">💸 Planner</button>
+  <button class="tab" data-tab="data">📚 Data</button>
+  <button class="tab" data-tab="settings">⚙️ Settings</button>
 </nav>
 
 <main>
-  <section id="income" class="panel active" role="region">
+  <section id="dashboard" class="panel active">
+    <h2>Dashboard</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Monthly Snapshot</h3>
+        <div class="rowline"><span>Total Income</span><strong id="dashInc">$0.00</strong></div>
+        <div class="rowline"><span>Total Expenses</span><strong id="dashExp">$0.00</strong></div>
+        <div class="rowline"><span>Debt Minimums</span><strong id="dashMin">$0.00</strong></div>
+        <div class="rowline"><span>Spending + Wiggle</span><strong id="dashSW">$0.00</strong></div>
+        <div class="rowline"><span>Leftover</span><strong id="dashLeft">$0.00</strong></div>
+      </div>
+      <div class="card">
+        <h3>Savings Rate</h3>
+        <div class="gauge">
+          <div id="gSavings" class="gbar" style="width:0%"></div>
+        </div>
+        <div class="muted" id="gSavingsLabel">0%</div>
+      </div>
+      <div class="card">
+        <h3>Debt‑free ETA (est.)</h3>
+        <div class="gauge">
+          <div id="gDebt" class="gbar" style="width:0%"></div>
+        </div>
+        <div class="muted" id="gDebtLabel">—</div>
+      </div>
+      <div class="card">
+        <h3>Bills Account Recommendation</h3>
+        <p class="hint">We average your monthly bills and round to the nearest $100 so your bills account always has enough.</p>
+        <div class="rowline"><span>Avg. Monthly Bills (last 3 snapshots)</span><strong id="avgBills">$0.00</strong></div>
+        <div class="rowline"><span>Suggested Deposit</span><strong id="suggestDeposit">$0.00</strong></div>
+        <div class="buttons">
+          <button id="snapshotNow">Record This Month</button>
+          <small class="muted" id="snapshotInfo"></small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="income" class="panel">
     <h2>Income</h2>
     <p class="hint">Add your monthly take-home pay (net). If paid multiple times per month, add each as a separate line.</p>
     <form id="incomeForm" class="inline-form" aria-label="Add income">
@@ -48,14 +86,14 @@
     </div>
   </section>
 
-  <section id="expenses" class="panel" role="region">
+  <section id="expenses" class="panel">
     <h2>Expenses</h2>
-    <p class="hint">Enter recurring monthly bills with due dates. Categories help with envelope-style planning.</p>
-    <form id="expForm" class="inline-form" aria-label="Add expense">
+    <p class="hint">Recurring monthly bills with due dates. Due dates help the planner split them across paychecks.</p>
+    <form id="expForm" class="inline-form">
       <input id="expName" placeholder="Name (e.g., Rent)" required>
       <input id="expAmount" placeholder="Amount (monthly)" inputmode="decimal" type="number" step="0.01" min="0" required>
       <input id="expDue" placeholder="Due day (1–31)" inputmode="numeric" type="number" min="1" max="31" value="1" required>
-      <select id="expCat" aria-label="Category">
+      <select id="expCat">
         <option>Housing</option><option>Utilities</option><option>Food</option><option>Transport</option>
         <option>Debt</option><option>Subscriptions</option><option>General</option><option>Medical</option>
         <option>Savings</option><option>Pets</option><option>Fun</option>
@@ -71,17 +109,17 @@
     </div>
   </section>
 
-  <section id="debts" class="panel" role="region">
+  <section id="debts" class="panel">
     <h2>Debts</h2>
-    <p class="hint">Track balances, APR, and minimums. Strategy is set in Settings (Avalanche or Snowball).</p>
-    <form id="debtForm" class="inline-form" aria-label="Add debt">
+    <p class="hint">Balances, APR, and minimums. Strategy is set in Settings (Avalanche/Snowball).</p>
+    <form id="debtForm" class="inline-form">
       <input id="debtName" placeholder="Name (e.g., Apple Card)" required>
       <input id="debtBal" placeholder="Balance" inputmode="decimal" type="number" step="0.01" min="0" required>
       <input id="debtApr" placeholder="APR %" inputmode="decimal" type="number" step="0.01" min="0" required>
       <input id="debtMin" placeholder="Min Payment" inputmode="decimal" type="number" step="0.01" min="0" required>
       <button type="submit" class="primary">Add</button>
     </form>
-    <div class="empty" id="debtEmpty" hidden>No debts added yet. Add a credit card or loan above.</div>
+    <div class="empty" id="debtEmpty" hidden>No debts added yet.</div>
     <div class="table-wrap">
       <table id="debtTable">
         <thead><tr><th>Name</th><th>Balance</th><th>APR %</th><th>Min</th><th></th></tr></thead>
@@ -90,9 +128,9 @@
     </div>
   </section>
 
-  <section id="planner" class="panel" role="region">
+  <section id="planner" class="panel">
     <h2>Paycheck Planner</h2>
-    <p class="hint">Assigns each bill to the paycheck before its due date. Set month and year, then Plan.</p>
+    <p class="hint">Each bill is assigned to the paycheck before its due date. Use Settings → Paydays to match your schedule.</p>
     <div class="inline-form wide">
       <label>Month <input id="planMonth" type="number" min="1" max="12"></label>
       <label>Year <input id="planYear" type="number" min="2000" max="2100"></label>
@@ -101,17 +139,9 @@
     <pre id="plannerOut" class="box"></pre>
   </section>
 
-  <section id="summary" class="panel" role="region">
-    <h2>Summary</h2>
-    <p class="hint">Your totals and monthly debt allocation.</p>
-    <button id="recalc" class="primary">Recalculate</button>
-    <pre id="summaryOut" class="box"></pre>
-    <div id="alertsList" class="box"></div>
-  </section>
-
-  <section id="data" class="panel" role="region">
+  <section id="data" class="panel">
     <h2>Data</h2>
-    <p class="hint">Everything in one place. Data is stored on-device (no cloud). Backups are optional.</p>
+    <p class="hint">Everything is stored on-device. You can still backup/restore.</p>
     <div class="cards">
       <div class="card">
         <h3>Income</h3>
@@ -137,20 +167,18 @@
     </div>
   </section>
 
-  <section id="settings" class="panel" role="region">
+  <section id="settings" class="panel">
     <h2>Settings</h2>
     <div class="settings-group">
       <h3>Budget Basics</h3>
-      <p class="hint">How much breathing room and fun money to reserve each month.</p>
+      <p class="hint">Breathing room and fun money each month.</p>
       <div class="setting-row">
         <label for="wigglePct">Wiggle Room <span id="wiggleVal">5%</span></label>
         <input id="wigglePct" type="range" min="0" max="20" step="0.5" value="5">
-        <small>Reserved for bill fluctuations and unexpected costs.</small>
       </div>
       <div class="setting-row">
         <label for="spendPct">Spending Money <span id="spendVal">5%</span></label>
         <input id="spendPct" type="range" min="0" max="30" step="0.5" value="5">
-        <small>Your guilt-free money each month.</small>
       </div>
     </div>
 
@@ -160,7 +188,7 @@
         <button data-seg="strat" data-val="Avalanche" class="seg active">Avalanche</button>
         <button data-seg="strat" data-val="Snowball" class="seg">Snowball</button>
       </div>
-      <small class="hint">Avalanche: pay highest APR first. Snowball: pay smallest balance first.</small>
+      <small class="hint">Avalanche: highest APR first • Snowball: smallest balance first</small>
     </div>
 
     <div class="settings-group">
@@ -187,7 +215,7 @@
 </main>
 
 <footer>
-  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.4</small>
+  <small>Offline-capable PWA. Data stays on-device (localStorage). v0.5</small>
 </footer>
 
 <script src="app.js"></script>
