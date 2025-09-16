@@ -1,4 +1,4 @@
-// Budget Buddy PWA v0.3 – dark mode + responsive form fixes + polish
+// Budget Buddy PWA v0.4 – clearer Settings + Data tab + polish
 const state = {
   incomes: [],
   expenses: [],
@@ -26,14 +26,13 @@ function load(){
   applyTheme(state.settings.theme || "system");
 }
 
+// Tables & empty states
 function updateEmptyStates(){
   $("#incomeEmpty").hidden = state.incomes.length>0;
   $("#expEmpty").hidden = state.expenses.length>0;
   $("#debtEmpty").hidden = state.debts.length>0;
 }
-
 function renderTables(){
-  // incomes
   const it = $("#incomeTable tbody"); it.innerHTML = "";
   state.incomes.forEach((i,idx)=>{
     const tr = document.createElement("tr");
@@ -41,7 +40,6 @@ function renderTables(){
       <td><button data-x="inc" data-i="${idx}">Delete</button></td>`;
     it.appendChild(tr);
   });
-  // expenses
   const et = $("#expTable tbody"); et.innerHTML = "";
   state.expenses.forEach((e,idx)=>{
     const tr = document.createElement("tr");
@@ -49,7 +47,6 @@ function renderTables(){
       <td><button data-x="exp" data-i="${idx}">Delete</button></td>`;
     et.appendChild(tr);
   });
-  // debts
   const dt = $("#debtTable tbody"); dt.innerHTML = "";
   state.debts.forEach((d,idx)=>{
     const tr = document.createElement("tr");
@@ -60,6 +57,7 @@ function renderTables(){
   updateEmptyStates();
 }
 
+// Totals & summary
 function totals(){
   const inc = state.incomes.reduce((s,i)=>s+Number(i.amount||0),0);
   const exp = state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
@@ -69,17 +67,12 @@ function totals(){
   const leftover = inc - (exp + mins + wig + spend);
   return {inc, exp, mins, wig, spend, leftover};
 }
-
 function orderedDebts(){
   const arr = [...state.debts];
-  if((state.settings.strat||"Avalanche")==="Avalanche"){
-    arr.sort((a,b)=>Number(b.apr)-Number(a.apr));
-  } else {
-    arr.sort((a,b)=>Number(a.balance)-Number(b.balance));
-  }
+  if((state.settings.strat||"Avalanche")==="Avalanche"){ arr.sort((a,b)=>Number(b.apr)-Number(a.apr)); }
+  else { arr.sort((a,b)=>Number(a.balance)-Number(b.balance)); }
   return arr;
 }
-
 function calcSummary(){
   const t = totals();
   const allocation = {};
@@ -92,7 +85,6 @@ function calcSummary(){
   }
   return { ...t, allocation };
 }
-
 function recalcSummary(){
   const out = $("#summaryOut");
   const data = calcSummary();
@@ -115,13 +107,13 @@ function recalcSummary(){
   alertsBox.innerHTML = alerts.length? `<strong>Upcoming due alerts:</strong><ul>${alerts.map(a=>`<li>${a}</li>`).join("")}</ul>` : "";
 }
 
+// Planner
 function getPaydays(month, year){
   const days = (state.settings.paydays||[15,30]).map(x=>parseInt(x,10)).filter(n=>n>=1&&n<=31).sort((a,b)=>a-b);
   const last = new Date(year, month, 0).getDate();
   const set = new Set(days.map(d=> Math.min(d,last)));
   return Array.from(set).map(d=> new Date(year, month-1, d));
 }
-
 function assignExpensesToPaydays(month, year){
   const paydays = getPaydays(month, year);
   const buckets = new Map(paydays.map(p=>[p.toDateString(), []]));
@@ -135,7 +127,6 @@ function assignExpensesToPaydays(month, year){
   }
   return { paydays, buckets };
 }
-
 function planMonth(){
   const now = new Date();
   const m = parseInt($("#planMonth").value|| (now.getMonth()+1),10);
@@ -163,6 +154,7 @@ function planMonth(){
   $("#plannerOut").textContent = lines.join("\n");
 }
 
+// Alerts
 function upcomingAlerts(){
   const daysAhead = Number(state.settings.alertDays||7);
   const today = new Date();
@@ -178,6 +170,41 @@ function upcomingAlerts(){
   return alerts;
 }
 
+// Data tab renderers
+function renderDataTab(){
+  // Income totals
+  const incTotal = state.incomes.reduce((s,i)=>s+Number(i.amount||0),0);
+  $("#dataIncomeTotals").textContent = `Total monthly income: ${currency(incTotal)}`;
+  const incList = $("#dataIncomeList"); incList.innerHTML="";
+  state.incomes.forEach(i=>{
+    const row = document.createElement("div"); row.className="row";
+    row.innerHTML = `<div>${i.name} (${i.freq||"Monthly"})</div><div>${currency(i.amount)}</div>`;
+    incList.appendChild(row);
+  });
+
+  // Expenses by category
+  const byCat = {};
+  state.expenses.forEach(e=>{ const k=e.cat||"General"; byCat[k]=(byCat[k]||0)+Number(e.amount||0); });
+  const expTotal = state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  $("#dataExpenseTotals").textContent = `Total monthly expenses: ${currency(expTotal)}`;
+  const catList = $("#dataExpenseByCat"); catList.innerHTML="";
+  Object.entries(byCat).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>{
+    const row = document.createElement("div"); row.className="row";
+    row.innerHTML = `<div>${k}</div><div>${currency(v)}</div>`;
+    catList.appendChild(row);
+  });
+
+  // Debts list
+  const debtBal = state.debts.reduce((s,d)=>s+Number(d.balance||0),0);
+  $("#dataDebtTotals").textContent = `Total debt balance: ${currency(debtBal)}`;
+  const debtList = $("#dataDebtList"); debtList.innerHTML="";
+  state.debts.forEach(d=>{
+    const row = document.createElement("div"); row.className="row";
+    row.innerHTML = `<div>${d.name} (${Number(d.apr).toFixed(2)}% APR)</div><div>Bal: ${currency(d.balance)} • Min: ${currency(d.min)}</div>`;
+    debtList.appendChild(row);
+  });
+}
+
 // Tabs + persistence
 function activateTab(name){
   $$(".tab").forEach(b=>{
@@ -187,11 +214,12 @@ function activateTab(name){
   });
   $$(".panel").forEach(p=> p.classList.toggle("active", p.id===name));
   localStorage.setItem("bb_last_tab", name);
+  if(name==="data"){ renderDataTab(); }
 }
 function initTabs(){
   $$(".tab").forEach(btn=> btn.addEventListener("click", ()=> activateTab(btn.dataset.tab)));
   const saved = localStorage.getItem("bb_last_tab");
-  if(saved && $("#"+saved)){ activateTab(saved); }
+  activateTab(saved && $("#"+saved) ? saved : "income");
 }
 
 // Events
@@ -200,20 +228,20 @@ function setupEvents(){
   $("#incomeForm").addEventListener("submit", (e)=>{
     e.preventDefault();
     state.incomes.push({ name: $("#incName").value.trim()||"Income", amount: parseFloat($("#incAmount").value||0), freq: $("#incFreq").value });
-    save(); renderTables(); recalcSummary(); planMonth(); e.target.reset();
+    save(); renderTables(); recalcSummary(); planMonth(); renderDataTab(); e.target.reset();
   });
   $("#expForm").addEventListener("submit", (e)=>{
     e.preventDefault();
     state.expenses.push({ name: $("#expName").value.trim()||"Expense", amount: parseFloat($("#expAmount").value||0), due: parseInt($("#expDue").value||1,10), cat: $("#expCat").value });
-    save(); renderTables(); recalcSummary(); planMonth(); e.target.reset();
+    save(); renderTables(); recalcSummary(); planMonth(); renderDataTab(); e.target.reset();
   });
   $("#debtForm").addEventListener("submit", (e)=>{
     e.preventDefault();
     state.debts.push({ name: $("#debtName").value.trim()||"Debt", balance: parseFloat($("#debtBal").value||0), apr: parseFloat($("#debtApr").value||0), min: parseFloat($("#debtMin").value||0) });
-    save(); renderTables(); recalcSummary(); e.target.reset();
+    save(); renderTables(); recalcSummary(); renderDataTab(); e.target.reset();
   });
 
-  // Delete
+  // Delete actions
   document.body.addEventListener("click", (e)=>{
     const btn = e.target.closest("button");
     if(!btn || !btn.dataset.x) return;
@@ -221,51 +249,64 @@ function setupEvents(){
     if(btn.dataset.x==="inc") state.incomes.splice(idx,1);
     if(btn.dataset.x==="exp") state.expenses.splice(idx,1);
     if(btn.dataset.x==="debt") state.debts.splice(idx,1);
-    save(); renderTables(); recalcSummary(); planMonth();
+    save(); renderTables(); recalcSummary(); planMonth(); renderDataTab();
   });
 
-  // Settings
+  // Settings segmented controls
+  $$(".segmented .seg").forEach(seg=>{
+    seg.addEventListener("click", ()=>{
+      const group = seg.dataset.seg;
+      const val = seg.dataset.val;
+      // toggle visuals
+      $$(`.segmented .seg[data-seg="${group}"]`).forEach(s=> s.classList.toggle("active", s===seg));
+      if(group==="strat"){ state.settings.strat = val; }
+      if(group==="theme"){ state.settings.theme = val; applyTheme(val); }
+      save();
+    });
+  });
+
+  // Range labels
+  const wig = $("#wigglePct"), sp = $("#spendPct");
+  const setLabels = ()=>{ $("#wiggleVal").textContent = `${Number(wig.value).toFixed(1)}%`; $("#spendVal").textContent = `${Number(sp.value).toFixed(1)}%`; };
+  [wig, sp].forEach(el=> el.addEventListener("input", setLabels));
+  setLabels();
+
+  // Save settings
   $("#saveSettings").addEventListener("click", ()=>{
     state.settings.wiggle = parseFloat($("#wigglePct").value||0);
     state.settings.spend = parseFloat($("#spendPct").value||0);
-    state.settings.strat = $("#strategy").value;
     state.settings.paydays = ($("#paydays").value||"15,30").split(",").map(s=>parseInt(s.trim(),10)).filter(Boolean);
     state.settings.alertDays = parseInt($("#alerts").value||7,10);
-    state.settings.theme = ($("#theme").value||"system");
-    applyTheme(state.settings.theme);
-    save(); recalcSummary(); planMonth();
-    alert("Settings saved.");
+    save(); recalcSummary(); planMonth(); alert("Settings saved.");
   });
 
-  $("#recalc").addEventListener("click", ()=> recalcSummary() );
-  $("#planBtn").addEventListener("click", ()=> planMonth() );
-
-  // Export JSON
-  $("#exportJSON").addEventListener("click", ()=>{
+  // Data tab backup/restore/reset
+  $("#backupBtn").addEventListener("click", ()=>{
     const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "budget_data.json"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "budget_buddy_backup.json"; a.click();
     setTimeout(()=>URL.revokeObjectURL(url), 1000);
   });
-
-  // Import JSON
-  $("#importJSON").addEventListener("click", async ()=>{
-    const file = $("#importFile").files[0];
-    if(!file){ alert("Choose a JSON file first."); return; }
-    const text = await file.text();
+  $("#restoreBtn").addEventListener("click", async ()=>{
+    const file = $("#restoreFile").files[0]; if(!file){ alert("Choose a backup file first."); return; }
     try{
-      const data = JSON.parse(text);
-      state.incomes = data.incomes||[];
-      state.expenses = data.expenses||[];
-      state.debts = data.debts||[];
+      const data = JSON.parse(await file.text());
+      state.incomes = data.incomes||[]; state.expenses = data.expenses||[]; state.debts = data.debts||[];
       state.settings = Object.assign(state.settings, data.settings||{});
       applyTheme(state.settings.theme||"system");
-      save(); renderTables(); recalcSummary(); planMonth();
-      alert("Imported.");
-    }catch(e){ alert("Invalid JSON."); }
+      save(); renderTables(); recalcSummary(); planMonth(); renderDataTab();
+      alert("Restore complete.");
+    }catch(e){ alert("Invalid file."); }
+  });
+  $("#resetBtn").addEventListener("click", ()=>{
+    if(confirm("Reset ALL data? This cannot be undone.")){
+      state.incomes=[]; state.expenses=[]; state.debts=[];
+      state.settings={ wiggle:5, spend:5, strat:"Avalanche", paydays:[15,30], alertDays:7, theme:"system" };
+      applyTheme(state.settings.theme); save(); renderTables(); recalcSummary(); planMonth(); renderDataTab();
+    }
   });
 
-  // Export CSV
+  // Export CSV link setup
   $("#downloadCSV").addEventListener("click", (e)=>{
     e.preventDefault();
     const rows = [
@@ -275,39 +316,29 @@ function setupEvents(){
       ...state.debts.map(d=>["debt",d.name,"","","","",d.balance,d.apr,d.min])
     ];
     const csv = rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], {type: "text/csv"});
-    const url = URL.createObjectURL(blob);
-    $("#downloadCSV").href = url;
-    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    const blob = new Blob([csv], {type:"text/csv"});
+    const url = URL.createObjectURL(blob); const a=$("#downloadCSV"); a.href=url; setTimeout(()=>URL.revokeObjectURL(url),5000);
   });
+
+  // Planner buttons
+  $("#recalc").addEventListener("click", ()=> recalcSummary() );
+  $("#planBtn").addEventListener("click", ()=> planMonth() );
 
   // Install prompt (non-iOS)
   let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', (e)=>{
-    e.preventDefault(); deferredPrompt = e; $("#installBtn").hidden = false;
-  });
+  window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; $("#installBtn").hidden=false; });
   $("#installBtn").addEventListener("click", async ()=>{
-    if(!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    deferredPrompt = null;
-    $("#installBtn").hidden = true;
+    if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; $("#installBtn").hidden=true;
   });
 }
 
 // SW
-if('serviceWorker' in navigator){
-  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js"));
-}
+if('serviceWorker' in navigator){ window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js")); }
 
 // Init
 load();
 document.addEventListener("DOMContentLoaded", ()=>{
-  renderTables();
-  recalcSummary();
-  $("#planMonth").value = (new Date().getMonth()+1);
-  $("#planYear").value = (new Date().getFullYear());
-  planMonth();
-  initTabs();
-  setupEvents();
+  renderTables(); recalcSummary();
+  $("#planMonth").value = (new Date().getMonth()+1); $("#planYear").value = (new Date().getFullYear());
+  planMonth(); initTabs(); setupEvents(); renderDataTab();
 });
