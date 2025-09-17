@@ -14,11 +14,9 @@ function showPanel(id){ $$('.panel').forEach(p=> p.classList.toggle('active', p.
 function initNav(){ const bar=document.querySelector('.tabbar'); bar.addEventListener('click', (e)=>{ const b=e.target.closest('.t'); if(!b) return; showPanel(b.dataset.tab); }); showPanel(localStorage.getItem('bb_tab')||'dashboard'); setTimeout(sizePill,0); window.addEventListener('resize', sizePill); }
 
 function sizePill(){ const tabs=$$('.tabbar .t'); const idx=tabs.findIndex(t=>t.classList.contains('active')); movePillToIndex(idx<0?2:idx); }
-function movePillToIndex(i){ const tabs=$$('.tabbar .t'); const pill=$('#tabPill'); if(!tabs[i]) return; const r=tabs[i].getBoundingClientRect(); const barR=document.querySelector('.tabbar').getBoundingClientRect();
-  // Pill width covers icon + label area; slightly larger on "home"
+function movePillToIndex(i){ const tabs=$$('.tabbar .t'); const pill=$('#tabPill'); if(!tabs[i]) return; const r=tabs[i].getBoundingClientRect(); const bar=document.querySelector('.tabbar'); const barR=bar.getBoundingClientRect();
   const w = Math.round(r.width*0.98);
-  const baseH = 62, h = tabs[i].classList.contains('home') ? Math.round(baseH*1.14) : baseH;
-  pill.style.width = w+'px'; pill.style.height = h+'px';
+  pill.style.width = w+'px'; // height fills bar (minus vertical padding set in CSS)
   const cx = r.left - barR.left + r.width/2; const tx = Math.round(cx - (w/2)); pill.style.transform = `translateX(${tx}px)`; }
 
 // --- Core computations ---
@@ -129,3 +127,15 @@ document.addEventListener('DOMContentLoaded', ()=>{ try{
   }catch(e){ console.error('[BB] init error', e); alert('BudgetBuddy init error. Try refreshing.'); }
   setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.style.display='none'; }, 800);
 });
+
+
+// v2.4 swipe navigation between tabs
+(function(){ 
+  let startX=null, startY=null, activeId=null; 
+  const threshold=50, restraint=80; // min X, max Y
+  const panels = $$('.panel'); 
+  function tabIndex(id){ return ['calendar','debts','dashboard','spending','budget'].indexOf(id); }
+  function showByIndex(idx){ const ids=['calendar','debts','dashboard','spending','budget']; if(idx<0||idx>=ids.length) return; showPanel(ids[idx]); }
+  document.addEventListener('touchstart', (e)=>{ const t=e.changedTouches[0]; startX=t.pageX; startY=t.pageY; activeId = localStorage.getItem('bb_tab') || 'dashboard'; }, {passive:true});
+  document.addEventListener('touchend', (e)=>{ if(startX===null) return; const t=e.changedTouches[0]; const dx=t.pageX-startX; const dy=t.pageY-startY; if(Math.abs(dy)>restraint) {startX=null; return;} if(Math.abs(dx)>threshold){ const cur=tabIndex(activeId); if(dx<0) showByIndex(cur+1); else showByIndex(cur-1); } startX=null; }, {passive:true});
+})();
