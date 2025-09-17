@@ -1,161 +1,29 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<meta name="theme-color" content="#0E2A22"/>
-<title>BudgetBuddy • v2.3</title>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
-<link rel="stylesheet" href="styles.css"/>
-</head>
-<body>
-<div id="splash" class="run" aria-hidden="true">
-  <div class="splash-circle"></div>
-  <div class="splash-brand">
-    <span class="logo-inline large"><svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="38" width="80" height="56" rx="14" fill="currentColor"/><path d="M48 64a16 16 0 0 0 32 0" fill="#0F1A15"/></svg></span>
-    <div class="wordmark"><span>Budget</span><span>Buddy</span></div>
-  </div>
-</div>
-
-<header class="appbar">
-  <button class="icon-btn invis" aria-hidden="true" tabindex="-1"></button>
-  <div class="brand-combo">
-    <span class="word">Budget</span>
-    <span class="logo-inline mid"><svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg"><rect x="24" y="38" width="80" height="56" rx="14" fill="currentColor"/><path d="M48 64a16 16 0 0 0 32 0" fill="#0F1A15"/></svg></span>
-    <span class="word">Buddy</span>
-  </div>
-  <button id="settingsBtn" class="icon-btn" aria-label="Settings">
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.078 2.25c-.917 0-1.699.663-1.86 1.567l-.21 1.154a8.28 8.28 0 0 0-1.856 1.07l-1.09-.49a1.875 1.875 0 0 0-2.5 2.5l.49 1.09a8.28 8.28 0 0 0-1.07 1.856l-1.154.21a1.875 1.875 0 0 0 0 3.72l1.154.21c.208.65.51 1.262.892 1.82l-.49 1.09a1.875 1.875 0 0 0 2.5 2.5l1.09-.49c.558.382 1.17.684 1.82.892l.21 1.154a1.875 1.875 0 0 0 3.72 0l.21-1.154a8.28 8.28 0 0 0 1.856-1.07l1.09.49a1.875 1.875 0 0 0 2.5-2.5l-.49-1.09c.382-.558.684-1.17.892-1.82l1.154-.21a1.875 1.875 0 0 0 0-3.72l-1.154-.21a8.28 8.28 0 0 0-1.07-1.856l.49-1.09a1.875 1.875 0 0 0-2.5-2.5l-1.09.49a8.28 8.28 0 0 0-1.856-1.07l-.21-1.154a1.875 1.875 0 0 0-1.86-1.567h-1.844ZM12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z"/></svg>
-  </button>
-</header>
-
-<main>
-  <section id="dashboard" class="panel active">
-    <div class="hero card lift">
-      <div class="hero-top">
-        <div class="label"><span class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-8 4h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg></span>You can spend</div>
-        <div class="amount" id="spendable">$0.00</div>
-        <div class="hero-meta" id="wiggleMeta">Wiggle room: $0.00</div>
-      </div>
-      <div class="hero-bottom">
-        <div class="row"><span class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5m-14.25 3.75h12a1.5 1.5 0 0 1 1.5 1.5v6A2.25 2.25 0 0 1 19.5 21.75H4.5A2.25 2.25 0 0 1 2.25 19.5v-6a1.5 1.5 0 0 0 1.5-1.5Z"/></svg></span><span>Bills due</span><strong id="heroBills">$0.00</strong></div>
-        <div class="row"><span class="mini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M3.75 6A1.5 1.5 0 0 0 2.25 7.5v9A1.5 1.5 0 0 0 3.75 18h16.5A1.5 1.5 0 0 0 21.75 16.5v-9A1.5 1.5 0 0 0 20.25 6H3.75Zm2.25 9h6"/></svg></span><span>Debt mins</span><strong id="heroMins">$0.00</strong></div>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="card lift">
-        <div class="card-head"><h2>New Paycheck</h2><div class="muted">Today or scheduled date</div></div>
-        <div class="inline-form ultra">
-          <label>Date <input id="pcDate" type="date" class="uniform"></label>
-          <label>Amount <input id="pcAmount" type="number" step="0.01" min="0" placeholder="0.00" class="uniform"></label>
-          <label>Note <input id="pcNote" placeholder="(optional)" class="uniform"></label>
-          <button id="pcAdd" class="btn primary" type="button">Add</button>
-        </div>
-        <div id="quickPaydays" class="buttons slim"></div>
-        <div class="segmented tiny">
-          <button class="seg active" data-kind="regular" type="button">Regular</button>
-          <button class="seg" data-kind="extra" type="button">Extra / Side</button>
-        </div>
-      </div>
-
-      <div class="card lift">
-        <div class="card-head"><h2>This Paycheck</h2><div class="muted">Simple plan</div></div>
-        <div id="paycheckCard" class="paycheck-card">
-          <details><summary>Details</summary><div class="rows" id="pcDetails"></div></details>
-          <div id="shortfall" class="shortfall" hidden></div>
-          <div class="buttons"><button id="applyCheck" type="button" class="btn">Mark Applied</button></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="calendar" class="panel">
-    <div class="card lift">
-      <div class="cal-head"><button id="calPrev" class="btn ghost">‹</button><h2 id="calTitle"></h2><button id="calNext" class="btn ghost">›</button></div>
-      <div class="weekday-row"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
-      <div id="calendarGrid" class="calendar uniform"></div>
-    </div>
-  </section>
-
-  <section id="debts" class="panel">
-    <div class="card lift">
-      <div class="card-head"><h2>Debts</h2></div>
-      <form id="debtForm" class="inline-form compact">
-        <input id="debtName" placeholder="Name (e.g., Apple Card)" required class="uniform">
-        <input id="debtBal" placeholder="Balance" type="number" step="0.01" min="0" required class="uniform">
-        <input id="debtApr" placeholder="APR %" type="number" step="0.01" min="0" required class="uniform">
-        <input id="debtMin" placeholder="Min Payment" type="number" step="0.01" min="0" required class="uniform">
-        <button type="submit" class="btn primary">Add</button>
-      </form>
-      <div class="empty" id="debtsEmpty" hidden>
-        <div class="illus">🙂</div>
-        <p>Add your first card or loan to track payoff.</p>
-      </div>
-      <div class="table-wrap"><table id="debtTable"><thead><tr><th>Name</th><th>Balance</th><th>APR %</th><th>Min</th><th></th></tr></thead><tbody></tbody></table></div>
-      <div class="segmented" role="radiogroup"><button data-seg="strat" data-val="Avalanche" class="seg active">Avalanche</button><button data-seg="strat" data-val="Snowball" class="seg">Snowball</button></div>
-      <div class="muted" id="debtEta">—</div>
-    </div>
-  </section>
-
-  <section id="spending" class="panel">
-    <div class="card lift">
-      <div class="card-head"><h2>Spending</h2>
-        <div class="segmented" id="spView"><button class="seg active" data-mode="list">≡ List</button><button class="seg" data-mode="bar">▮ Bar</button><button class="seg" data-mode="pie">◔ Pie</button></div>
-      </div>
-      <div class="empty" id="spEmpty">
-        <div class="illus">🧾</div>
-        <p>No categories yet — add bills to see spending.</p>
-      </div>
-      <div id="spList" class="mini-table" hidden></div>
-      <svg id="spBar" class="chart" viewBox="0 0 320 160" hidden></svg>
-      <svg id="spPie" class="chart" viewBox="0 0 160 160" hidden></svg>
-    </div>
-  </section>
-
-  <section id="budget" class="panel">
-    <div class="card lift">
-      <h2>Monthly Plan</h2>
-      <div class="rowline"><span>Avg bills (last 3)</span><strong id="avgBills">$0.00</strong></div>
-      <div class="rowline"><span>Suggested bills deposit</span><strong id="suggestDeposit">$0.00</strong></div>
-    </div>
-  </section>
-</main>
-
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>BudgetBuddy • v2.5</title><meta name="theme-color" content="#0E2A22"/>
+<link rel="manifest" href="manifest.json"/><link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="stylesheet" href="styles.css"/></head><body>
+<header class="appbar"><h1>BudgetBuddy</h1><button id="settings" aria-label="Settings">⚙︎</button></header>
+<div id="viewport" class="viewport"><div id="track" class="track">
+<section id="calendar" class="panel"><h2>Calendar</h2><p>Calendar content…</p></section>
+<section id="debts" class="panel"><h2>Debts</h2><p>Debts content…</p></section>
+<section id="dashboard" class="panel active"><div class="hero"><div class="amount">$0.00</div><div class="meta">Wiggle room: $0.00</div></div>
+<div class="card"><h3>New Paycheck</h3><div class="form"><input type="date"/><input placeholder="Amount"/><button class="btn">Add</button></div></div></section>
+<section id="spending" class="panel"><h2>Spending</h2><p>Spending content…</p></section>
+<section id="budget" class="panel"><h2>Budget</h2><p>Budget content…</p></section>
+</div></div>
 <nav class="tabbar" aria-label="Main tabs">
-  <div class="pill" id="tabPill"></div>
-  <button class="t" data-tab="calendar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5m-14.25 3.75h12a1.5 1.5 0 0 1 1.5 1.5v6A2.25 2.25 0 0 1 19.5 21.75H4.5A2.25 2.25 0 0 1 2.25 19.5v-6a1.5 1.5 0 0 0 1.5-1.5Z"/></svg></span><small>Calendar</small></button>
-  <button class="t" data-tab="debts"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M3.75 6A1.5 1.5 0 0 0 2.25 7.5v9A1.5 1.5 0 0 0 3.75 18h16.5A1.5 1.5 0 0 0 21.75 16.5v-9A1.5 1.5 0 0 0 20.25 6H3.75Zm2.25 9h6"/></svg></span><small>Debts</small></button>
-  <button class="t home" data-tab="dashboard"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5M5.25 9V21h13.5V9"/></svg></span><small>Dashboard</small></button>
-  <button class="t" data-tab="spending"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 15V9m6 6V6m6 9V12"/></svg></span><small>Spending</small></button>
-  <button class="t" data-tab="budget"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5A2.25 2.25 0 0 1 6 5.25h10.5a1.5 1.5 0 0 1 1.5 1.5V8h1.5A2.25 2.25 0 0 1 21.75 10.25v6A2.25 2.25 0 0 1 19.5 18.5H6A2.25 2.25 0 0 1 3.75 16.25V7.5Z"/></svg></span><small>Budget</small></button>
+  <div id="glass" class="glass"></div>
+  <button class="homeFab" data-tab="dashboard" aria-label="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5M5.25 9V21h13.5V9"/></svg>
+  </button>
+  <div class="tabs">
+    <button class="t" data-tab="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5m-14.25 3.75h12a1.5 1.5 0 0 1 1.5 1.5v6A2.25 2.25 0 0 1 19.5 21.75H4.5A2.25 2.25 0 0 1 2.25 19.5v-6a1.5 1.5 0 0 0 1.5-1.5Z"/></svg><small>Calendar</small></button>
+    <button class="t" data-tab="debts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M3.75 6A1.5 1.5 0 0 0 2.25 7.5v9A1.5 1.5 0 0 0 3.75 18h16.5A1.5 1.5 0 0 0 21.75 16.5v-9A1.5 1.5 0 0 0 20.25 6H3.75Zm2.25 9h6"/></svg><small>Debts</small></button>
+    <button class="t active" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5 12 3l9 7.5M5.25 9V21h13.5V9"/></svg><small>Dashboard</small></button>
+    <button class="t" data-tab="spending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 15V9m6 6V6m6 9V12"/></svg><small>Spending</small></button>
+    <button class="t" data-tab="budget"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5A2.25 2.25 0 0 1 6 5.25h10.5a1.5 1.5 0 0 1 1.5 1.5V8h1.5A2.25 2.25 0 0 1 21.75 10.25v6A2.25 2.25 0 0 1 19.5 18.5H6A2.25 2.25 0 0 1 3.75 16.25V7.5Z"/></svg><small>Budget</small></button>
+  </div>
 </nav>
-
-<dialog id="settingsModal">
-  <form method="dialog" class="settings">
-    <div class="s-head"><div class="s-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5A2.25 2.25 0 0 1 6 5.25h10.5a1.5 1.5 0 0 1 1.5 1.5V8h1.5A2.25 2.25 0 0 1 21.75 10.25v6A2.25 2.25 0 0 1 19.5 18.5H6A2.25 2.25 0 0 1 3.75 16.25V7.5Z"/></svg></div><h3>Settings</h3><button value="close" class="btn ghost">Done</button></div>
-    <div class="s-grid">
-      <label> Wiggle % <input id="setWiggle" type="number" min="0" max="30" step="1" class="uniform"></label>
-      <label> Spending % <input id="setSpend" type="number" min="0" max="30" step="1" class="uniform"></label>
-      <fieldset class="pay-group">
-        <legend>Pay Schedule</legend>
-        <label class="row"><input type="radio" name="paytype" id="paySemi" value="semi" checked> Twice a month (days)</label>
-        <input id="setDays" placeholder="15,30" class="uniform">
-        <label class="row"><input type="radio" name="paytype" id="payBi" value="bi"> Bi‑weekly (anchor date)</label>
-        <input id="setAnchor" type="date" class="uniform">
-      </fieldset>
-      <label> Theme
-        <select id="setTheme" class="uniform"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
-      </label>
-    </div>
-    <small class="muted">Changes save instantly.</small>
-  </form>
-</dialog>
-
-<footer><small>Offline‑capable PWA • Local‑only • v2.3</small></footer>
-<script src="app.js"></script>
-</body>
-</html>
+<footer><small>Offline‑capable PWA • Local‑only • v2.5</small></footer>
+<script src="app.js"></script></body></html>
