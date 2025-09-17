@@ -1,4 +1,5 @@
 
+// v2.3 — nav pill full coverage, wiggle meta, polish, and tab dividers
 const state = { incomes: [], expenses: [], debts: [], paychecks: [], settings: { wiggle: 5, spend: 5, strat: "Avalanche", schedule: {type:'semi', days:[15,30], anchor: null}, theme: "system" }, history: [], envelopes: { month: null, items: {} }, ui: { spMode: 'list', calOffset: 0 } };
 const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
 const currency = v => `$${Number(v||0).toFixed(2)}`; const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -12,12 +13,15 @@ function showPanel(id){ $$('.panel').forEach(p=> p.classList.toggle('active', p.
   if(id==='calendar') renderCalendar(); if(id==='debts') renderDebts(); if(id==='spending') renderSpending(); if(id==='budget') renderEnvelopes(); }
 function initNav(){ const bar=document.querySelector('.tabbar'); bar.addEventListener('click', (e)=>{ const b=e.target.closest('.t'); if(!b) return; showPanel(b.dataset.tab); }); showPanel(localStorage.getItem('bb_tab')||'dashboard'); setTimeout(sizePill,0); window.addEventListener('resize', sizePill); }
 
-function sizePill(){ const pill=$('#tabPill'); const tabs=$$('.tabbar .t'); if(!tabs.length) return; const idx=tabs.findIndex(t=>t.classList.contains('active')); movePillToIndex(idx<0?2:idx); }
+function sizePill(){ const tabs=$$('.tabbar .t'); const idx=tabs.findIndex(t=>t.classList.contains('active')); movePillToIndex(idx<0?2:idx); }
 function movePillToIndex(i){ const tabs=$$('.tabbar .t'); const pill=$('#tabPill'); if(!tabs[i]) return; const r=tabs[i].getBoundingClientRect(); const barR=document.querySelector('.tabbar').getBoundingClientRect();
-  const w = Math.round(r.width*0.92); const h = 56 * (tabs[i].classList.contains('home') ? 1.08 : 1.0); 
+  // Pill width covers icon + label area; slightly larger on "home"
+  const w = Math.round(r.width*0.98);
+  const baseH = 62, h = tabs[i].classList.contains('home') ? Math.round(baseH*1.14) : baseH;
   pill.style.width = w+'px'; pill.style.height = h+'px';
   const cx = r.left - barR.left + r.width/2; const tx = Math.round(cx - (w/2)); pill.style.transform = `translateX(${tx}px)`; }
 
+// --- Core computations ---
 function getPaydaysFor(month, year){
   const sched = state.settings.schedule || {type:'semi', days:[15,30]};
   const lastDay = new Date(year, month, 0).getDate();
@@ -55,7 +59,8 @@ function planForPaycheck(p){ const bills=billsBefore(p.date); const d=new Date(p
 function renderDashboard(){ const now=new Date(); $('#pcDate').value=todayISO();
   const pays=getPaydaysFor(now.getMonth()+1, now.getFullYear());
   const latest=state.paychecks.slice().sort((a,b)=> new Date(b.date)-new Date(a.date))[0] || {date: todayISO(), amount: 0, kind:'regular'}; const plan=planForPaycheck(latest);
-  $('#spendable').textContent=currency(plan.spendable); $('#heroBills').textContent=currency(plan.bills); $('#heroMins').textContent=currency(plan.minsPer); $('#heroWig').textContent=currency(plan.wigPer);
+  $('#spendable').textContent=currency(plan.spendable); $('#heroBills').textContent=currency(plan.bills); $('#heroMins').textContent=currency(plan.minsPer);
+  $('#wiggleMeta').textContent = `Wiggle room: ${currency(plan.wigPer)}`;
   const det=$('#pcDetails'); det.innerHTML=""; [['Bills before next payday', plan.bills], ['Cushion (wiggle share)', plan.wigPer], ['Debt minimum share', plan.minsPer], ['Extra debt (if any)', plan.extraDebt]].forEach(([k,v])=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div>${k}</div><div>${currency(v)}</div>`; det.appendChild(row); });
   const qp=$('#quickPaydays'); qp.innerHTML=""; pays.forEach(d=>{ const b=document.createElement('button'); b.className='btn ghost'; b.type='button'; b.textContent=`Use ${d.toLocaleDateString()}`;
     b.addEventListener('click', ()=>{ $('#pcDate').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }); qp.appendChild(b); });
