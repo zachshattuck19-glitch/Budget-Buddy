@@ -1,43 +1,29 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<meta name="color-scheme" content="dark"/>
-<title>BudgetBuddy • v2.6.5</title>
-<link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
-<meta name="theme-color" content="#0E2A22"/>
-<link rel="stylesheet" href="styles.css?v=265"/>
-</head>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark"/><title>BudgetBuddy • v2.6.6</title>
+<link rel="manifest" href="manifest.json"/><link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<meta name="theme-color" content="#0E2A22"/><link rel="stylesheet" href="styles.css?v=266"/></head>
 <body>
-<header class="appbar">
-  <div class="brand">BudgetBuddy</div>
-  <button id="openSettings" class="gear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.75" y="7.5" width="17.25" height="11" rx="2.25"/><path d="M6 7.5V6a2.25 2.25 0 0 1 2.25-2.25H16.5A1.5 1.5 0 0 1 18 5.25V7.5"/></svg></button>
-</header>
-
-<div id="viewport" class="viewport">
-  <div id="track" class="track">
-    <section id="calendar" class="panel"><div class="sectionTitle">Calendar</div><div class="card tall"><p>Calendar goes here…</p></div></section>
-    <section id="debts" class="panel"><div class="sectionTitle">Debts</div><div class="card tall"><p>Debts content…</p></div></section>
-    <section id="dashboard" class="panel active">
-      <div class="ctaBanner"><div class="ctaTitle">Payday tomorrow</div><button id="quickAdd" class="ctaInner">Add Paycheck</button></div>
-      <div class="hero"><div class="meta">You can spend up to</div><div class="amount" id="spendAmt">$0</div><div class="meta tiny" id="wiggleMeta">Wiggle room: $0.00</div></div>
-      <div class="card"><div class="sectionTitle">New Paycheck</div>
-        <div class="grid"><input id="payDate" type="date"/><input id="payAmount" type="number" inputmode="decimal" placeholder="Amount"/><button id="addPaycheck" class="btn">Add</button></div>
-        <div class="seg"><button class="chip" data-fill="15">Use 15th</button><button class="chip" data-fill="30">Use 30th</button><button class="chip" data-extra="1">Extra / Side</button></div>
-      </div>
-      <div class="card"><div class="sectionTitle">Monthly Snapshot</div><div class="rows"><div class="row"><span>Total Income</span><strong id="snapIncome">$0</strong></div><div class="row"><span>Total Bills</span><strong id="snapBills">$0</strong></div></div></div>
-      <div class="spacer"></div>
-    </section>
-    <section id="spending" class="panel"><div class="sectionTitle">Spending</div><div class="card tall"><p>Spending breakdown…</p></div></section>
-    <section id="budget" class="panel"><div class="sectionTitle">Budget</div><div class="card tall"><p>Budget categories…</p></div></section>
-  </div>
-</div>
+<header class="appbar"><div class="brand">BudgetBuddy</div><button id="openSettings" class="gear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.75" y="7.5" width="17.25" height="11" rx="2.25"/><path d="M6 7.5V6a2.25 2.25 0 0 1 2.25-2.25H16.5A1.5 1.5 0 0 1 18 5.25V7.5"/></svg></button></header>
+<div id="viewport" class="viewport"><div id="track" class="track">
+  <section id="calendar" class="panel"><div class="sectionTitle">Calendar</div><div class="card tall"><p>Calendar goes here…</p></div></section>
+  <section id="debts" class="panel"><div class="sectionTitle">Debts</div><div class="card tall"><p>Debts content…</p></div></section>
+  <section id="dashboard" class="panel active">
+    <div class="ctaBanner"><div class="ctaTitle">Payday tomorrow</div><button id="quickAdd" class="ctaInner">Add Paycheck</button></div>
+    <div class="hero"><div class="meta">You can spend up to</div><div class="amount" id="spendAmt">$0</div><div class="meta tiny" id="wiggleMeta">Wiggle room: $0.00</div></div>
+    <div class="card"><div class="sectionTitle">New Paycheck</div>
+      <div class="grid"><input id="payDate" type="date"/><input id="payAmount" type="number" inputmode="decimal" placeholder="Amount"/><button id="addPaycheck" class="btn">Add</button></div>
+      <div class="seg"><button class="chip" data-fill="15">Use 15th</button><button class="chip" data-fill="30">Use 30th</button><button class="chip" data-extra="1">Extra / Side</button></div>
+    </div>
+    <div class="card"><div class="sectionTitle">Monthly Snapshot</div><div class="rows"><div class="row"><span>Total Income</span><strong id="snapIncome">$0</strong></div><div class="row"><span>Total Bills</span><strong id="snapBills">$0</strong></div></div></div>
+    <div class="spacer"></div>
+  </section>
+  <section id="spending" class="panel"><div class="sectionTitle">Spending</div><div class="card tall"><p>Spending breakdown…</p></div></section>
+  <section id="budget" class="panel"><div class="sectionTitle">Budget</div><div class="card tall"><p>Budget categories…</p></div></section>
+</div></div>
 
 <nav class="tabbar" aria-label="Main tabs">
-  <div class="glass"></div>
-  <div id="activePad" class="activePad"></div>
+  <div class="glass"></div><div id="activePad" class="activePad"></div>
   <div class="tabs">
     <button class="t" data-tab="calendar"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.75 3v2.25M17.25 3v2.25M3.75 8.25h16.5"/><rect x="3.75" y="6" width="16.5" height="13.5" rx="2.25"/></svg></span><small>Calendar</small></button>
     <button class="t" data-tab="debts"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.25" y="6" width="19.5" height="12" rx="1.5"/><path d="M4.5 15h6"/></svg></span><small>Debts</small></button>
@@ -47,7 +33,5 @@
   </div>
 </nav>
 
-<footer><small>Offline‑capable PWA • Local‑only • v2.6.5</small></footer>
-<script src="app.js?v=265"></script>
-</body>
-</html>
+<footer><small>Offline‑capable PWA • Local‑only • v2.6.6</small></footer>
+<script src="app.js?v=266"></script></body></html>
