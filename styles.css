@@ -103,3 +103,26 @@ label.row{display:flex;align-items:center;gap:8px}
 }
 /* Sliding pill covering icon+text */
 .pill{position:absolute;z-index:0;height:62px;background:#2D6A4F;border-radius:18px;top:6px;left:0;transform:translateX(0);transition:transform .28s cubic-bezier(.22,.61,.36,1), width .2s, height .2s;box-shadow:0 6px 16px rgba(0,0,0,.22)}
+
+
+/* v2.3.1: Nav divider layering fix + polish */
+.tabbar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(180deg,#0F1A15,#0B130F);backdrop-filter:saturate(180%) blur(18px);border-top:1px solid var(--border);display:flex;justify-content:space-around;gap:0;padding:8px 8px calc(12px + env(safe-area-inset-bottom));z-index:1002;overflow:hidden}
+.t{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;flex:1 1 auto;background:transparent;border:none;padding:10px 0;color:#9CB8AC;font-weight:800;z-index:1;min-width:70px;isolation:isolate}
+.t .ico svg{width:22px;height:22px} .t small{position:relative;z-index:2}
+.t.active{color:#fff}
+.t:not(:last-child)::after{
+  content:""; position:absolute; right:-1px; top:50%; transform:translateY(-50%);
+  width:3px; height:20px; background:#183229; border-radius:6px; opacity:.55; z-index:0;
+}
+/* Pill above dividers and below text/icons */
+.pill{position:absolute;z-index:1;height:66px;background:#2D6A4F;border-radius:18px;top:4px;left:0;transform:translateX(0);transition:transform .38s cubic-bezier(.22,.85,.32,1), width .26s, height .26s;box-shadow:0 10px 24px rgba(0,0,0,.28)}
+/* Dashboard grows more */
+.t.home.active ~ #tabPill, .t.home.active + .pill{height:74px}
+
+/* v2.3.1: Motion polish */
+.panel{transition:opacity .22s ease, transform .22s ease}
+.card{transition:transform .18s ease, box-shadow .18s ease, background .18s ease}
+.card:active{transform:translateY(1px) scale(.997)}
+.btn{position:relative;overflow:hidden}
+.btn:active::after{content:"";position:absolute;inset:auto;left:50%;top:50%;width:0;height:0;border-radius:999px;background:rgba(255,255,255,.18);transform:translate(-50%,-50%);animation:bbRipple .5s ease-out forwards}
+@keyframes bbRipple{to{width:220%;height:220%;opacity:0}}
