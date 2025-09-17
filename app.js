@@ -1,5 +1,5 @@
 
-// Budget Buddy v1.3.4 (full build)
+// v1.3.5: compact dashboard + ui-rounded font
 const state = { incomes: [], expenses: [], debts: [], paychecks: [], settings: { wiggle: 5, spend: 5, strat: "Avalanche", paydays: [15,30], alertDays: 0, theme: "system" }, history: [], envelopes: { month: null, items: {} }, ui: { spMode: 'list', calOffset: 0 } };
 const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
 const currency = v => `$${Number(v||0).toFixed(2)}`; const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -40,7 +40,7 @@ function renderDashboard(){ const now=new Date(); const showPd=getPaydaysFor(now
   const mt=monthlyTotals(); $('#dashInc').textContent=currency(mt.inc); $('#dashExp').textContent=currency(mt.exp); $('#dashMin').textContent=currency(mt.mins); $('#dashSW').textContent=currency(mt.spend+mt.wig); $('#dashLeft').textContent=currency(mt.leftover);
   const months=estimateDebtMonths(mt.leftover); $('#gDebt').style.width=months===Infinity?'0%':Math.min(100,100*(1/Math.max(1,months)))+'%'; $('#gDebtLabel').textContent=months===Infinity?'—':`${months} mo (~${(months/12).toFixed(1)} yrs)`; }
 
-// Calendar redesign
+// Calendar
 function monthFromOffset(offset){ const now=new Date(); return new Date(now.getFullYear(), now.getMonth()+offset, 1); }
 function renderCalendar(){ const base=monthFromOffset(state.ui.calOffset); const year=base.getFullYear(), month=base.getMonth();
   $('#calTitle').textContent = base.toLocaleString(undefined,{month:'long', year:'numeric'});
@@ -127,5 +127,5 @@ function setupEvents(){
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js')); }
 load(); applyTheme(state.settings.theme||'system');
 document.addEventListener('DOMContentLoaded', ()=>{ try{ renderDashboard(); renderCalendar(); renderDebts(); renderSpending(); renderEnvelopes(); initNav(); setupEvents(); }catch(e){ alert('Budget Buddy init error. Try refreshing.'); console.error(e); }
-  setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.style.display='none'; }, 1200);
+  setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.style.display='none'; }, 1000);
 });

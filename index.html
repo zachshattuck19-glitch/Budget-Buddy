@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0E2A22"/>
-  <title>Budget Buddy (v1.3.4)</title>
+  <title>Budget Buddy (v1.3.5)</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,33 +41,33 @@
 
 <main>
   <section id="dashboard" class="panel active">
-    <div id="paydayBanner" class="banner" hidden>
+    <div id="paydayBanner" class="banner compact" hidden>
       <div><strong>It’s payday!</strong> Add your paycheck to see what you can spend.</div>
       <div class="buttons">
-        <button id="bannerAdd" class="primary">Add Paycheck</button>
-        <button id="bannerPlan">Plan Now</button>
+        <button id="bannerAdd" class="primary">Add</button>
+        <button id="bannerPlan" class="ghost">Plan</button>
       </div>
     </div>
 
-    <div class="card compact">
+    <div class="card super-compact">
       <div class="card-header">
         <h2>New Paycheck</h2>
         <div class="muted">Today or scheduled date</div>
       </div>
-      <div class="inline-form wide compact">
+      <div class="inline-form ultra">
         <label>Date <input id="pcDate" type="date"></label>
         <label>Amount <input id="pcAmount" type="number" step="0.01" min="0" placeholder="0.00"></label>
         <label>Note <input id="pcNote" placeholder="(optional)"></label>
         <button id="pcAdd" class="primary" type="button">Add</button>
       </div>
-      <div id="quickPaydays" class="buttons"></div>
+      <div id="quickPaydays" class="buttons slim"></div>
       <div class="segmented tiny">
         <button class="seg active" data-kind="regular" type="button">Regular</button>
         <button class="seg" data-kind="extra" type="button">Extra / Side</button>
       </div>
     </div>
 
-    <div class="card compact">
+    <div class="card super-compact">
       <div class="card-header">
         <h2>This Paycheck</h2>
         <div class="muted">Simple plan</div>
@@ -84,7 +84,7 @@
     </div>
 
     <div class="cards duo">
-      <div class="card compact">
+      <div class="card super-compact">
         <h3>Monthly Snapshot</h3>
         <div class="rowline"><span>Total Income</span><strong id="dashInc">$0.00</strong></div>
         <div class="rowline"><span>Total Bills</span><strong id="dashExp">$0.00</strong></div>
@@ -92,7 +92,7 @@
         <div class="rowline"><span>Wiggle + Spending</span><strong id="dashSW">$0.00</strong></div>
         <div class="rowline"><span>Leftover</span><strong id="dashLeft">$0.00</strong></div>
       </div>
-      <div class="card compact">
+      <div class="card super-compact">
         <h3>Debt‑free ETA</h3>
         <div class="gauge"><div id="gDebt" class="gbar" style="width:0%"></div></div>
         <div class="muted" id="gDebtLabel">—</div>
@@ -193,7 +193,7 @@
 
 <nav class="tabbar" aria-label="Main tabs">
   <button class="t active" type="button" data-tab="dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 19.5v-9Z"/><path d="M9 21v-6h6v6z"/></svg><small>Dashboard</small></button>
-  <button class="t center" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v3H7zM15 2h2v3h-2z"/><path d="M4 5h16a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 5h16v12H4z"/></svg><small>Calendar</small></button>
+  <button class="t center" type="button" data-tab="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v3H7zM15 2h2v3h-2z"/><path d="M4 5h16a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg><small>Calendar</small></button>
   <button class="t" type="button" data-tab="debts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><rect x="2" y="8" width="20" height="3" fill="#fff"/></svg><small>Debts</small></button>
   <button class="t" type="button" data-tab="spending"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21h16v2H2V3h2z"/><path d="M7 11h3v10H7zM12 6h3v15h-3zM17 14h3v7h-3z"/></svg><small>Spending</small></button>
   <button class="t" type="button" data-tab="budget"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a3 3 0 0 1 3-3h10a2 2 0 0 1 2 2v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7z"/><circle cx="17" cy="12" r="1.8" fill="#fff"/></svg><small>Budget</small></button>
@@ -223,7 +223,7 @@
   </form>
 </dialog>
 
-<footer><small>Offline-capable PWA • Local-only • v1.3.4</small></footer>
+<footer><small>Offline-capable PWA • Local-only • v1.3.5</small></footer>
 <script src="app.js"></script>
 </body>
 </html>
