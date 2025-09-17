@@ -1,6 +1,5 @@
 
-// v1.3.9 — hotfix
-console.log('[BB] init script loaded');
+// v1.3.10 — logo inline from user SVG + responsive layout
 const state = { incomes: [], expenses: [], debts: [], paychecks: [], settings: { wiggle: 5, spend: 5, strat: "Avalanche", schedule: {type:'semi', days:[15,30], anchor: null}, theme: "system" }, history: [], envelopes: { month: null, items: {} }, ui: { spMode: 'list', calOffset: 0 } };
 const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
 const currency = v => `$${Number(v||0).toFixed(2)}`; const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -10,7 +9,7 @@ function load(){ try{ const raw=localStorage.getItem('bb_data'); if(raw){ const 
   } }catch(e){ console.error('[BB] load error', e); } }
 function applyTheme(t){ const root=document.documentElement; if(t==='light') root.setAttribute('data-theme','light'); else if(t==='dark') root.setAttribute('data-theme','dark'); else root.removeAttribute('data-theme'); }
 
-function showPanel(id){ console.log('[BB] showPanel', id); $$('.panel').forEach(p=> p.classList.toggle('active', p.id===id)); $$('.t').forEach(b=> b.classList.toggle('active', b.dataset.tab===id)); localStorage.setItem('bb_tab', id);
+function showPanel(id){ $$('.panel').forEach(p=> p.classList.toggle('active', p.id===id)); $$('.t').forEach(b=> b.classList.toggle('active', b.dataset.tab===id)); localStorage.setItem('bb_tab', id);
   if(id==='spending') renderSpending(); if(id==='calendar') renderCalendar(); if(id==='debts') renderDebts(); if(id==='budget') renderEnvelopes(); }
 function initNav(){ document.querySelector('.tabbar').addEventListener('click', (e)=>{ const b=e.target.closest('.t'); if(!b) return; showPanel(b.dataset.tab); }); showPanel(localStorage.getItem('bb_tab')||'dashboard'); }
 
@@ -21,7 +20,7 @@ function getPaydaysFor(month, year){
     const days = (sched.days||[15,30]).map(n=>Math.min(Math.max(1,parseInt(n,10)||1), lastDay));
     return Array.from(new Set(days)).sort((a,b)=>a-b).map(d=> new Date(year, month-1, d));
   }
-  // bi-weekly generation from anchor
+  // bi-weekly from anchor
   const anchorISO = sched.anchor || todayISO();
   const a = new Date(anchorISO); a.setHours(0,0,0,0);
   const start = new Date(year, month-1, 1); start.setHours(0,0,0,0);
@@ -49,7 +48,7 @@ function planForPaycheck(p){ const bills=billsBefore(p.date); const d=new Date(p
   const wigPer=(mt.wig/Math.max(1,numChecksThisMonth)); const minsPer=(mt.mins/Math.max(1,numChecksThisMonth)); const spendable=Number(p.amount)-(bills+wigPer+minsPer);
   const extraDebt=Math.max(0,spendable); const shortfall=Math.max(0,-(spendable)); return {bills,wigPer,minsPer,spendable,extraDebt,shortfall}; }
 
-function renderDashboard(){ console.log('[BB] renderDashboard'); const now=new Date(); const pays=getPaydaysFor(now.getMonth()+1, now.getFullYear()); const showPd=pays.some(d=> d.getDate()===now.getDate()); $('#paydayBanner').hidden=!showPd;
+function renderDashboard(){ const now=new Date(); const pays=getPaydaysFor(now.getMonth()+1, now.getFullYear()); const showPd=pays.some(d=> d.getDate()===now.getDate()); $('#paydayBanner').hidden=!showPd;
   $('#pcDate').value=todayISO(); const qp=$('#quickPaydays'); qp.innerHTML=""; pays.forEach(d=>{ const b=document.createElement('button'); b.type='button'; b.textContent=`Use ${d.toLocaleDateString()}`;
     b.addEventListener('click', ()=>{ $('#pcDate').value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }); qp.appendChild(b); });
   const latest=state.paychecks.slice().sort((a,b)=> new Date(b.date)-new Date(a.date))[0] || {date: todayISO(), amount: 0, kind:'regular'}; const plan=planForPaycheck(latest);
@@ -59,7 +58,7 @@ function renderDashboard(){ console.log('[BB] renderDashboard'); const now=new D
 }
 
 function monthFromOffset(offset){ const now=new Date(); return new Date(now.getFullYear(), now.getMonth()+Number(offset||0), 1); }
-function renderCalendar(){ console.log('[BB] renderCalendar'); const base=monthFromOffset(state.ui.calOffset); const year=base.getFullYear(), month=base.getMonth();
+function renderCalendar(){ const base=monthFromOffset(state.ui.calOffset); const year=base.getFullYear(), month=base.getMonth();
   $('#calTitle').textContent = base.toLocaleString(undefined,{month:'long', year:'numeric'});
   const grid=$('#calendarGrid'); grid.innerHTML=""; const startDay=new Date(year, month, 1).getDay(); const daysInMonth=new Date(year, month+1, 0).getDate();
   for(let i=0;i<startDay;i++){ const pad=document.createElement('div'); pad.className='cell'; grid.appendChild(pad); }
@@ -71,9 +70,9 @@ function renderCalendar(){ console.log('[BB] renderCalendar'); const base=monthF
     cell.appendChild(inner); grid.appendChild(cell); }
 }
 
-function renderDebts(){ console.log('[BB] renderDebts'); const tb=$('#debtTable tbody'); tb.innerHTML=""; state.debts.forEach((d,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.name}</td><td>${currency(d.balance)}</td><td>${Number(d.apr).toFixed(2)}%</td><td>${currency(d.min)}</td><td><button data-x="debt" data-i="${idx}">Delete</button></td>`; tb.appendChild(tr); }); }
+function renderDebts(){ const tb=$('#debtTable tbody'); tb.innerHTML=""; state.debts.forEach((d,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.name}</td><td>${currency(d.balance)}</td><td>${Number(d.apr).toFixed(2)}%</td><td>${currency(d.min)}</td><td><button data-x="debt" data-i="${idx}">Delete</button></td>`; tb.appendChild(tr); }); }
 function spendingByCategory(){ const by={}; state.expenses.forEach(e=>{ const k=e.cat||'General'; by[k]=(by[k]||0)+Number(e.amount||0); }); return Object.entries(by).sort((a,b)=>b[1]-a[1]); }
-function renderSpending(){ console.log('[BB] renderSpending'); $$('#spView .seg').forEach(s=> s.classList.toggle('active', s.dataset.mode===state.ui.spMode)); const data=spendingByCategory(); const lst=$('#spList'); const svgb=$('#spBar'); const svgp=$('#spPie'); lst.innerHTML=""; svgb.setAttribute('hidden', true); svgp.setAttribute('hidden', true); lst.hidden=false;
+function renderSpending(){ $$('#spView .seg').forEach(s=> s.classList.toggle('active', s.dataset.mode===state.ui.spMode)); const data=spendingByCategory(); const lst=$('#spList'); const svgb=$('#spBar'); const svgp=$('#spPie'); lst.innerHTML=""; svgb.setAttribute('hidden', true); svgp.setAttribute('hidden', true); lst.hidden=false;
   data.forEach(([k,v])=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div>${k}</div><div>${currency(v)}</div>`; lst.appendChild(row); });
   if(state.ui.spMode==='bar'){ lst.hidden=true; svgb.removeAttribute('hidden'); } else if(state.ui.spMode==='pie'){ lst.hidden=true; svgp.removeAttribute('hidden'); } }
 function renderEnvelopes(){{}}
