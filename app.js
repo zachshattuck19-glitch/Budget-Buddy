@@ -1,5 +1,4 @@
 
-// v2.1.1 — Pill covers full tab; centered "Budget [logo] Buddy" header
 const state = { incomes: [], expenses: [], debts: [], paychecks: [], settings: { wiggle: 5, spend: 5, strat: "Avalanche", schedule: {type:'semi', days:[15,30], anchor: null}, theme: "system" }, history: [], envelopes: { month: null, items: {} }, ui: { spMode: 'list', calOffset: 0 } };
 const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
 const currency = v => `$${Number(v||0).toFixed(2)}`; const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -15,10 +14,10 @@ function initNav(){ const bar=document.querySelector('.tabbar'); bar.addEventLis
 
 function sizePill(){ const pill=$('#tabPill'); const tabs=$$('.tabbar .t'); if(!tabs.length) return; const idx=tabs.findIndex(t=>t.classList.contains('active')); movePillToIndex(idx<0?2:idx); }
 function movePillToIndex(i){ const tabs=$$('.tabbar .t'); const pill=$('#tabPill'); if(!tabs[i]) return; const r=tabs[i].getBoundingClientRect(); const barR=document.querySelector('.tabbar').getBoundingClientRect();
-  const w = Math.round(r.width*0.92); pill.style.width = w+'px';
+  const w = Math.round(r.width*0.92); const h = 56 * (tabs[i].classList.contains('home') ? 1.08 : 1.0); 
+  pill.style.width = w+'px'; pill.style.height = h+'px';
   const cx = r.left - barR.left + r.width/2; const tx = Math.round(cx - (w/2)); pill.style.transform = `translateX(${tx}px)`; }
 
-// --- Core computations (unchanged) ---
 function getPaydaysFor(month, year){
   const sched = state.settings.schedule || {type:'semi', days:[15,30]};
   const lastDay = new Date(year, month, 0).getDate();
@@ -75,9 +74,13 @@ function renderCalendar(){ const base=monthFromOffset(state.ui.calOffset); const
     cell.appendChild(inner); grid.appendChild(cell); }
 }
 
-function renderDebts(){ const tb=$('#debtTable tbody'); tb.innerHTML=""; state.debts.forEach((d,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.name}</td><td>${currency(d.balance)}</td><td>${Number(d.apr).toFixed(2)}%</td><td>${currency(d.min)}</td><td><button data-x="debt" data-i="${idx}" class="btn ghost">Delete</button></td>`; tb.appendChild(tr); }); }
+function renderDebts(){ const tb=$('#debtTable tbody'); tb.innerHTML="";
+  if(state.debts.length===0) $('#debtsEmpty').hidden=false; else $('#debtsEmpty').hidden=true;
+  state.debts.forEach((d,idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${d.name}</td><td>${currency(d.balance)}</td><td>${Number(d.apr).toFixed(2)}%</td><td>${currency(d.min)}</td><td><button data-x="debt" data-i="${idx}" class="btn ghost">Delete</button></td>`; tb.appendChild(tr); }); }
 function spendingByCategory(){ const by={}; state.expenses.forEach(e=>{ const k=e.cat||'General'; by[k]=(by[k]||0)+Number(e.amount||0); }); return Object.entries(by).sort((a,b)=>b[1]-a[1]); }
-function renderSpending(){ $$('#spView .seg').forEach(s=> s.classList.toggle('active', s.dataset.mode===state.ui.spMode)); const data=spendingByCategory(); const lst=$('#spList'); const svgb=$('#spBar'); const svgp=$('#spPie'); lst.innerHTML=""; svgb.setAttribute('hidden', true); svgp.setAttribute('hidden', true); lst.hidden=false;
+function renderSpending(){ $$('#spView .seg').forEach(s=> s.classList.toggle('active', s.dataset.mode===state.ui.spMode)); const data=spendingByCategory();
+  const empty=$('#spEmpty'); const lst=$('#spList'); const svgb=$('#spBar'); const svgp=$('#spPie'); lst.innerHTML=""; svgb.setAttribute('hidden', true); svgp.setAttribute('hidden', true); lst.hidden=false;
+  if(data.length===0){ empty.hidden=false; lst.hidden=true; return; } empty.hidden=true;
   data.forEach(([k,v])=>{ const row=document.createElement('div'); row.className='row'; row.innerHTML=`<div>${k}</div><div>${currency(v)}</div>`; lst.appendChild(row); });
   if(state.ui.spMode==='bar'){ lst.hidden=true; svgb.removeAttribute('hidden'); } else if(state.ui.spMode==='pie'){ lst.hidden=true; svgp.removeAttribute('hidden'); } }
 function renderEnvelopes(){{}}
