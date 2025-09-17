@@ -1,5 +1,5 @@
 
-// BudgetBuddy v2.0 UI refresh — preserves functionality
+// v2.1 rebuild — Heroicons + sliding pill + header wallet icon
 const state = { incomes: [], expenses: [], debts: [], paychecks: [], settings: { wiggle: 5, spend: 5, strat: "Avalanche", schedule: {type:'semi', days:[15,30], anchor: null}, theme: "system" }, history: [], envelopes: { month: null, items: {} }, ui: { spMode: 'list', calOffset: 0 } };
 const $ = s => document.querySelector(s); const $$ = s => Array.from(document.querySelectorAll(s));
 const currency = v => `$${Number(v||0).toFixed(2)}`; const todayISO = () => new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -9,9 +9,12 @@ function load(){ try{ const raw=localStorage.getItem('bb_data'); if(raw){ const 
   } }catch(e){ console.error('[BB] load error', e); } }
 function applyTheme(t){ const root=document.documentElement; if(t==='light') root.setAttribute('data-theme','light'); else if(t==='dark') root.setAttribute('data-theme','dark'); else root.removeAttribute('data-theme'); }
 
-function showPanel(id){ $$('.panel').forEach(p=> p.classList.toggle('active', p.id===id)); $$('.t').forEach(b=> b.classList.toggle('active', b.dataset.tab===id)); localStorage.setItem('bb_tab', id);
+function showPanel(id){ $$('.panel').forEach(p=> p.classList.toggle('active', p.id===id)); $$('.t').forEach((b,i)=>{ const active=b.dataset.tab===id; b.classList.toggle('active', active); if(active) movePillToIndex(i); }); localStorage.setItem('bb_tab', id);
   if(id==='calendar') renderCalendar(); if(id==='debts') renderDebts(); if(id==='spending') renderSpending(); if(id==='budget') renderEnvelopes(); }
-function initNav(){ document.querySelector('.tabbar').addEventListener('click', (e)=>{ const b=e.target.closest('.t'); if(!b) return; showPanel(b.dataset.tab); }); showPanel(localStorage.getItem('bb_tab')||'dashboard'); }
+function initNav(){ const bar=document.querySelector('.tabbar'); bar.addEventListener('click', (e)=>{ const b=e.target.closest('.t'); if(!b) return; showPanel(b.dataset.tab); }); showPanel(localStorage.getItem('bb_tab')||'dashboard'); setTimeout(sizePill,0); window.addEventListener('resize', sizePill); }
+
+function sizePill(){ const pill=$('#tabPill'); const tabs=$$('.tabbar .t'); if(!tabs.length) return; const idx=tabs.findIndex(t=>t.classList.contains('active')); const w=tabs[0].getBoundingClientRect().width; pill.style.width = Math.floor(w*0.7)+'px'; movePillToIndex(idx<0?2:idx); }
+function movePillToIndex(i){ const tabs=$$('.tabbar .t'); const pill=$('#tabPill'); if(!tabs[i]) return; const r=tabs[i].getBoundingClientRect(); const barR=document.querySelector('.tabbar').getBoundingClientRect(); const cx = r.left - barR.left + r.width/2; const tx = Math.round(cx - (pill.getBoundingClientRect().width/2)); pill.style.transform = `translateX(${tx}px)`; }
 
 function getPaydaysFor(month, year){
   const sched = state.settings.schedule || {type:'semi', days:[15,30]};
@@ -20,7 +23,6 @@ function getPaydaysFor(month, year){
     const days = (sched.days||[15,30]).map(n=>Math.min(Math.max(1,parseInt(n,10)||1), lastDay));
     return Array.from(new Set(days)).sort((a,b)=>a-b).map(d=> new Date(year, month-1, d));
   }
-  // bi-weekly generation from anchor
   const anchorISO = sched.anchor || todayISO();
   const a = new Date(anchorISO); a.setHours(0,0,0,0);
   const start = new Date(year, month-1, 1); start.setHours(0,0,0,0);
@@ -102,14 +104,15 @@ function setupEvents(){
 
   let kind='regular'; $$('.segmented.tiny .seg').forEach(seg=> seg.addEventListener('click', ()=>{ $$('.segmented.tiny .seg').forEach(s=> s.classList.toggle('active', s===seg)); kind=seg.dataset.kind; }));
   $('#pcAdd')?.addEventListener('click', ()=>{ const p={date: $('#pcDate').value||todayISO(), amount: parseFloat($('#pcAmount').value||0), note: $('#pcNote').value||"", kind, applied:false}; state.paychecks.push(p); save(); renderDashboard(); alert('Paycheck added.'); });
-  $('#applyCheck')?.addEventListener('click', ()=>{ const latest=state.paychecks.sort((a,b)=> new Date(b.date)-new Date(a.date))[0]; if(latest){ latest.applied=true; save(); alert('Marked applied.'); } });
 
   $('#calPrev')?.addEventListener('click', ()=>{ state.ui.calOffset = Number(state.ui.calOffset||0) - 1; save(); renderCalendar(); });
   $('#calNext')?.addEventListener('click', ()=>{ state.ui.calOffset = Number(state.ui.calOffset||0) + 1; save(); renderCalendar(); });
 
   $('#spView')?.addEventListener('click', (e)=>{ const b=e.target.closest('.seg'); if(!b) return; state.ui.spMode=b.dataset.mode; save(); renderSpending(); });
 
-  document.body.addEventListener('click', (e)=>{ const btn=e.target.closest('button'); if(!btn||!btn.dataset.x) return; if(btn.dataset.x==='debt'){ const idx=parseInt(btn.dataset.i,10); state.debts.splice(idx,1); save(); renderDebts(); renderDashboard(); } });
+  document.body.addEventListener('click', (e)=>{ const btn=e.target.closest('button'); if(!btn||!btn.id) return;
+    if(btn.id==='applyCheck'){ const latest=state.paychecks.sort((a,b)=> new Date(b.date)-new Date(a.date))[0]; if(latest){ latest.applied=true; save(); alert('Marked applied.'); } }
+  });
 }
 
 if('serviceWorker' in navigator){ window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js')); }
